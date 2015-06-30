@@ -166,6 +166,30 @@ lit_is_utf8_string_valid (const lit_utf8_byte_t *utf8_buf_p, /**< utf-8 string *
 } /* lit_is_utf8_string_valid */
 
 /**
+ * Check code unit type
+ *
+ * @return true if code unit is a low surrogate
+ *         false otherwise
+ */
+bool
+lit_is_code_unit_low_surrogate (ecma_char_t code_unit) /**< code unit */
+{
+  return LIT_UTF16_LOW_SURROGATE_MIN <= code_unit && code_unit <= LIT_UTF16_LOW_SURROGATE_MAX;
+} /* lit_is_code_unit_low_surrogate */
+
+/**
+ * Check code unit type
+ *
+ * @return true if code unit is a high surrogate
+ *         false otherwise
+ */
+bool
+lit_is_code_unit_high_surrogate (ecma_char_t code_unit) /**< code unit */
+{
+  return LIT_UTF16_HIGH_SURROGATE_MIN <= code_unit && code_unit <= LIT_UTF16_HIGH_SURROGATE_MAX;
+} /* lit_is_code_unit_high_surrogate */
+
+/**
  * Initialize iterator for traversing utf-8 string as a string of code units
  *
  * @return iterator
@@ -221,6 +245,61 @@ convert_code_point_to_high_surrogate (lit_code_point_t code_point) /**< code poi
 } /* convert_code_point_to_low_surrogate */
 
 /**
+ * Get next code unit form the iterated string
+ *
+ * @return next code unit
+ */
+ecma_char_t
+lit_utf8_iterator_read_code_unit (lit_utf8_iterator_t *buf_iter_p) /**< @in-out: utf-8 string iterator */
+{
+  JERRY_ASSERT (!lit_utf8_iterator_reached_buffer_end (buf_iter_p));
+
+  if (buf_iter_p->code_point)
+  {
+    ecma_char_t code_unit = convert_code_point_to_low_surrogate (buf_iter_p->code_point);
+    return code_unit;
+  }
+
+  lit_code_point_t code_point;
+  lit_read_code_point_from_utf8 (buf_iter_p->buf_p + buf_iter_p->buf_offset,
+                                 buf_iter_p->buf_size - buf_iter_p->buf_offset,
+                                 &code_point);
+
+  if (code_point <= LIT_UTF16_CODE_UNIT_MAX)
+  {
+    return (ecma_char_t) code_point;
+  }
+  else
+  {
+    return convert_code_point_to_high_surrogate (code_point);
+  }
+} /* lit_utf8_iterator_read_code_unit */
+
+/**
+ * Increment iterator to point to next code unit
+ */
+void
+lit_utf8_iterator_increment (lit_utf8_iterator_t *buf_iter_p) /**< @in-out: utf-8 string iterator */
+{
+  JERRY_ASSERT (!lit_utf8_iterator_reached_buffer_end (buf_iter_p));
+
+  if (buf_iter_p->code_point)
+  {
+    buf_iter_p->code_point = 0;
+  }
+
+  lit_code_point_t code_point;
+  buf_iter_p->buf_offset += lit_read_code_point_from_utf8 (buf_iter_p->buf_p + buf_iter_p->buf_offset,
+                                                           buf_iter_p->buf_size - buf_iter_p->buf_offset,
+                                                           &code_point);
+
+  if (code_point > LIT_UTF16_CODE_UNIT_MAX)
+  {
+    buf_iter_p->code_point = code_point;
+  }
+} /* lit_utf8_iterator_read_code_unit_and_increment */
+
+/**
  * Get next code unit form the iterated string and increment iterator to point to next code unit
  *
  * @return next code unit
@@ -274,6 +353,17 @@ lit_utf8_iterator_reached_buffer_end (const lit_utf8_iterator_t *buf_iter_p) /**
 
   return false;
 } /* lit_utf8_iterator_reached_buffer_end */
+
+/**
+ * Get pointer to current position inside string buffer
+ *
+ * @return pointer to current position
+ */
+const lit_utf8_byte_t *
+lit_utf8_iterator_get_current_ptr (const lit_utf8_iterator_t *buf_iter_p) /**< utf-8 string iterator */
+{
+  return buf_iter_p->buf_p + buf_iter_p->buf_offset;
+} /* lit_utf8_iterator_get_current_ptr */
 
 /**
  * Calculate size of a zero-terminated utf-8 string
@@ -521,6 +611,26 @@ lit_code_point_to_utf8 (lit_code_point_t code_point, /**< code point */
     return 4;
   }
 } /* lit_code_unit_to_utf8 */
+
+/**
+ * Convert surrogate pair to code point
+ */
+lit_code_point_t
+lit_convert_surrogate_pair_to_code_point (ecma_char_t high_surrogate,
+                                          ecma_char_t low_surrogate)
+{
+  JERRY_ASSERT (lit_is_code_unit_high_surrogate (high_surrogate));
+  JERRY_ASSERT (lit_is_code_unit_low_surrogate (low_surrogate));
+
+  lit_code_point_t code_point;
+  code_point = (uint16_t) (high_surrogate - LIT_UTF16_HIGH_SURROGATE_MIN);
+  code_point <<= LIT_UTF16_BITS_IN_SURROGATE;
+
+  code_point += LIT_UTF16_FIRST_SURROGATE_CODE_POINT;
+
+  code_point |= (uint16_t) (low_surrogate - LIT_UTF16_LOW_SURROGATE_MIN);
+  return code_point;
+} /* lit_surrogate_pair_to_code_point */
 
 /**
  * Compare utf-8 string to utf-8 string

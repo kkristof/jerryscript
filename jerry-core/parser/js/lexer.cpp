@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include <lit/lit-strings.h>
 #include "ecma-helpers.h"
 #include "jrt-libc-includes.h"
 #include "jsp-mm.h"
@@ -59,6 +60,7 @@ get_char (size_t i)
   {
     return '\0';
   }
+
   return *(buffer + i);
 }
 
@@ -442,37 +444,29 @@ convert_string_to_token_transform_escape_seq (token_type tok_type, /**< type of 
   }
 
   lit_utf8_byte_t *str_buf_p = (lit_utf8_byte_t*) jsp_mm_alloc (source_str_size);
-
-  const lit_utf8_byte_t *source_str_iter_p = source_str_p;
   lit_utf8_byte_t *str_buf_iter_p = str_buf_p;
+
+  /* const lit_utf8_byte_t *source_str_iter_p = source_str_p; */
+  lit_utf8_iterator_t source_str_iter = lit_utf8_iterator_create (source_str_p, (lit_utf8_size_t) source_str_size);
 
   bool is_correct_sequence = true;
   bool every_char_islower = true;
   bool every_char_allowed_in_identifier = true;
 
-  while (source_str_iter_p < source_str_p + source_str_size)
+  ecma_char_t prev_converted_char = ECMA_CHAR_NULL;
+  while (!lit_utf8_iterator_reached_buffer_end (&source_str_iter))
   {
-    ecma_char_t converted_char;
+    ecma_char_t converted_char = lit_utf8_iterator_read_code_unit_and_increment (&source_str_iter);
 
-    if (*source_str_iter_p != '\\')
+    if (converted_char == '\\')
     {
-      converted_char = (lit_utf8_byte_t) *source_str_iter_p++;
-
-      JERRY_ASSERT (str_buf_iter_p <= str_buf_p + source_str_size);
-      JERRY_ASSERT (source_str_iter_p <= source_str_p + source_str_size);
-    }
-    else
-    {
-      source_str_iter_p++;
-
-      const lit_utf8_byte_t escape_character = (lit_utf8_byte_t) *source_str_iter_p++;
-      JERRY_ASSERT (source_str_iter_p <= source_str_p + source_str_size);
+      const ecma_char_t escape_character = lit_utf8_iterator_read_code_unit_and_increment (&source_str_iter);
 
       if (isdigit (escape_character))
       {
         if (escape_character == '0')
         {
-          JERRY_UNIMPLEMENTED ("<NUL> character is not currently supported.\n");
+          converted_char = ECMA_CHAR_NULL;
         }
         else
         {
@@ -486,7 +480,7 @@ convert_string_to_token_transform_escape_seq (token_type tok_type, /**< type of 
       {
         const uint32_t hex_chars_num = (escape_character == 'u' ? 4u : 2u);
 
-        if (source_str_iter_p + hex_chars_num > source_str_p + source_str_size)
+        if (source_str_iter.buf_offset + hex_chars_num > source_str_size)
         {
           is_correct_sequence = false;
           break;
@@ -497,9 +491,9 @@ convert_string_to_token_transform_escape_seq (token_type tok_type, /**< type of 
 
         for (uint32_t i = 0; i < hex_chars_num; i++)
         {
-          const lit_utf8_byte_t byte = (lit_utf8_byte_t) *source_str_iter_p++;
+          const ecma_char_t ecma_char = lit_utf8_iterator_read_code_unit_and_increment (&source_str_iter);
 
-          if (!isxdigit (byte))
+          if (!isxdigit (ecma_char))
           {
             chars_are_hex = false;
             break;
@@ -512,12 +506,12 @@ convert_string_to_token_transform_escape_seq (token_type tok_type, /**< type of 
             JERRY_ASSERT ((char_code & 0xF000u) == 0);
 
             char_code = (uint16_t) (char_code << 4u);
-            char_code = (uint16_t) (char_code + ecma_char_hex_to_int (byte));
+            char_code = (uint16_t) (char_code + ecma_char_hex_to_int (ecma_char));
           }
         }
 
         JERRY_ASSERT (str_buf_iter_p <= str_buf_p + source_str_size);
-        JERRY_ASSERT (source_str_iter_p <= source_str_p + source_str_size);
+        JERRY_ASSERT (source_str_iter.buf_offset <= source_str_size);
 
         if (!chars_are_hex)
         {
@@ -534,14 +528,14 @@ convert_string_to_token_transform_escape_seq (token_type tok_type, /**< type of 
       }
       else if (ecma_char_is_line_terminator (escape_character))
       {
-        if (source_str_iter_p + 1 <= source_str_p + source_str_size)
+        if (str_buf_iter_p + 1 <= source_str_p + source_str_size)
         {
-          lit_utf8_byte_t byte = *source_str_iter_p;
+          ecma_char_t ecma_char = lit_utf8_iterator_read_code_unit (&source_str_iter);
 
           if (escape_character == '\x0D'
-              && byte == '\x0A')
+              && ecma_char == '\x0A')
           {
-            source_str_iter_p++;
+            lit_utf8_iterator_increment (&source_str_iter);
           }
         }
 
@@ -553,9 +547,20 @@ convert_string_to_token_transform_escape_seq (token_type tok_type, /**< type of 
       }
     }
 
-    TODO ("Support surrogate paris.")
-    str_buf_iter_p += lit_code_unit_to_utf8 (converted_char, str_buf_iter_p);
-    JERRY_ASSERT (str_buf_iter_p <= str_buf_p + source_str_size);
+    if (lit_is_code_unit_high_surrogate (prev_converted_char)
+        && lit_is_code_unit_low_surrogate (converted_char))
+    {
+      str_buf_iter_p -= LIT_UTF8_MAX_BYTES_IN_CODE_UNIT;
+      lit_code_point_t code_point = lit_convert_surrogate_pair_to_code_point (prev_converted_char, converted_char);
+      str_buf_iter_p += lit_code_point_to_utf8 (code_point, str_buf_iter_p);
+    }
+    else
+    {
+      str_buf_iter_p += lit_code_unit_to_utf8 (converted_char, str_buf_iter_p);
+      JERRY_ASSERT (str_buf_iter_p <= str_buf_p + source_str_size);
+    }
+
+    prev_converted_char = converted_char;
 
     if (!islower (converted_char))
     {

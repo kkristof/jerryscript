@@ -39,10 +39,17 @@ typedef struct
 /* validation */
 bool lit_is_utf8_string_valid (const lit_utf8_byte_t *, lit_utf8_size_t);
 
+/* checks */
+bool lit_is_code_unit_low_surrogate (ecma_char_t);
+bool lit_is_code_unit_high_surrogate (ecma_char_t);
+
 /* iteration */
 lit_utf8_iterator_t lit_utf8_iterator_create (const lit_utf8_byte_t *, lit_utf8_size_t);
+ecma_char_t lit_utf8_iterator_read_code_unit (lit_utf8_iterator_t *);
+void lit_utf8_iterator_increment (lit_utf8_iterator_t *);
 ecma_char_t lit_utf8_iterator_read_code_unit_and_increment (lit_utf8_iterator_t *);
 bool lit_utf8_iterator_reached_buffer_end (const lit_utf8_iterator_t *);
+const lit_utf8_byte_t *lit_utf8_iterator_get_current_ptr (const lit_utf8_iterator_t *);
 
 /* size */
 lit_utf8_size_t lit_zt_utf8_string_size (const lit_utf8_byte_t *);
@@ -60,6 +67,7 @@ lit_utf8_size_t lit_get_unicode_char_size_by_utf8_first_byte (lit_utf8_byte_t);
 /* conversion */
 lit_utf8_size_t lit_code_unit_to_utf8 (ecma_char_t, lit_utf8_byte_t *);
 lit_utf8_size_t lit_code_point_to_utf8 (lit_code_point_t, lit_utf8_byte_t *);
+lit_code_point_t lit_convert_surrogate_pair_to_code_point (ecma_char_t, ecma_char_t);
 
 /* comparison */
 bool lit_compare_utf8_strings (const lit_utf8_byte_t *,
