@@ -13,13 +13,13 @@
  * limitations under the License.
  */
 
-#include "lit-unicode-helpers.h"
+#include "lit-char-helpers.h"
 
 /**
  * Check if code unit is a unicode letter
  */
 bool
-lit_is_unicode_letter (ecma_char_t c) /**< code unit */
+lit_char_is_unicode_letter (ecma_char_t c) /**< code unit */
 {
   if (((c >= 'A') && (c <= 'Z')) ||
       ((c >= 'a') && (c <= 'z')) ||
@@ -286,4 +286,4 @@ lit_is_unicode_letter (ecma_char_t c) /**< code unit */
   {
     return false;
   }
-} /* lit_is_unicode_letter */
+} /* lit_char_is_unicode_letter */

@@ -13,11 +13,11 @@
  * limitations under the License.
  */
 
-#ifndef LIT_UNICODE_HELPERS_H
-#define LIT_UNICODE_HELPERS_H
+#ifndef LIT_CHAR_HELPERS_H
+#define LIT_CHAR_HELPERS_H
 
 #include "lit-globals.h"
 
-bool lit_is_unicode_letter (ecma_char_t);
+bool lit_char_is_unicode_letter (ecma_char_t);
 
-#endif /* LIT_UNICODE_HELPERS_H */
+#endif /* LIT_CHAR_HELPERS_H */
