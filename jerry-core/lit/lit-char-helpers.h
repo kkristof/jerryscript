@@ -62,6 +62,6 @@ extern bool lit_char_is_unicode_connector_punctuation (ecma_char_t);
  */
 extern bool lit_char_is_word_char (ecma_char_t);
 
-extern bool lit_char_hex_to_int (ecma_char_t);
+extern uint32_t lit_char_hex_to_int (ecma_char_t);
 
 #endif /* LIT_CHAR_HELPERS_H */

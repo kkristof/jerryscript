@@ -378,7 +378,7 @@ lit_char_is_word_char (ecma_char_t c) /**< code unit */
  *
  * @return digit value, corresponding to the hex char
  */
-bool
+uint32_t
 lit_char_hex_to_int (ecma_char_t c) /**< code unit, corresponding to
                                      *    one of [0-9A-Fa-f] characters */
 {
