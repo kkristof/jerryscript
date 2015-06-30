@@ -82,11 +82,11 @@ main (int __attr_unused___ argc,
   /* test lit_utf8_iterator */
   lit_utf8_byte_t bytes[] = {0xF0, 0x90, 0x8D, 0x88};
   lit_utf8_iterator_t iter = lit_utf8_iterator_create (bytes, sizeof (bytes));
-  ecma_char_t code_unit = lit_utf8_iterator_read_code_unit_and_increment (&iter);
-  JERRY_ASSERT (!lit_utf8_iterator_reached_buffer_end (&iter));
+  ecma_char_t code_unit = lit_utf8_iterator_read_next_and_incr (&iter);
+  JERRY_ASSERT (!lit_utf8_iterator_is_eos (&iter));
   JERRY_ASSERT (code_unit == 0xD800);
-  code_unit = lit_utf8_iterator_read_code_unit_and_increment (&iter);
-  JERRY_ASSERT (lit_utf8_iterator_reached_buffer_end (&iter));
+  code_unit = lit_utf8_iterator_read_next_and_incr (&iter);
+  JERRY_ASSERT (lit_utf8_iterator_is_eos (&iter));
   JERRY_ASSERT (code_unit == 0xDF48);
 
   mem_finalize (true);

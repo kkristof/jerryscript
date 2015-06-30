@@ -32,8 +32,7 @@ typedef struct
   lit_utf8_size_t buf_offset; /* current offset in the buffer */
   lit_utf8_size_t buf_size; /* buffer length */
   const lit_utf8_byte_t *buf_p; /* buffer */
-  lit_code_point_t code_point; /* code point is saved here when processed Unicode character is higher than
-                                * 0xFFFF */
+  bool is_non_bmp_middle; /* flag indicating that current position of the iterator is the middle of 4-byte char */
 } lit_utf8_iterator_t;
 
 /* validation */
@@ -45,12 +44,26 @@ bool lit_is_code_unit_high_surrogate (ecma_char_t);
 
 /* iteration */
 lit_utf8_iterator_t lit_utf8_iterator_create (const lit_utf8_byte_t *, lit_utf8_size_t);
-bool lit_utf8_iterator_is_next_read_valid (lit_utf8_iterator_t *);
-ecma_char_t lit_utf8_iterator_read_code_unit (lit_utf8_iterator_t *);
-void lit_utf8_iterator_increment (lit_utf8_iterator_t *);
-ecma_char_t lit_utf8_iterator_read_code_unit_and_increment (lit_utf8_iterator_t *);
-bool lit_utf8_iterator_reached_buffer_end (const lit_utf8_iterator_t *);
-const lit_utf8_byte_t *lit_utf8_iterator_get_current_ptr (const lit_utf8_iterator_t *);
+
+void lit_utf8_iterator_set_to_bos (lit_utf8_iterator_t *);
+void lit_utf8_iterator_set_to_eos (lit_utf8_iterator_t *);
+
+ecma_char_t lit_utf8_iterator_read_next (const lit_utf8_iterator_t *);
+ecma_char_t lit_utf8_iterator_read_prev (const lit_utf8_iterator_t *);
+
+void lit_utf8_iterator_incr (lit_utf8_iterator_t *);
+void lit_utf8_iterator_decr (lit_utf8_iterator_t *);
+void lit_utf8_iterator_advance (lit_utf8_iterator_t *, ecma_length_t);
+void lit_utf8_iterator_set_offset (lit_utf8_iterator_t *, lit_utf8_size_t);
+
+ecma_char_t lit_utf8_iterator_read_next_and_incr (lit_utf8_iterator_t *);
+ecma_char_t lit_utf8_iterator_read_prev_and_decr (lit_utf8_iterator_t *);
+
+lit_utf8_size_t lit_utf8_iterator_get_offset (const lit_utf8_iterator_t *);
+lit_utf8_byte_t *lit_utf8_iterator_get_ptr (const lit_utf8_iterator_t *);
+
+bool lit_utf8_iterator_is_eos (const lit_utf8_iterator_t *);
+bool lit_utf8_iterator_is_bos (const lit_utf8_iterator_t *);
 
 /* size */
 lit_utf8_size_t lit_zt_utf8_string_size (const lit_utf8_byte_t *);
@@ -85,5 +98,8 @@ bool lit_compare_utf8_strings_relational (const lit_utf8_byte_t *string1_p,
 lit_utf8_size_t lit_read_code_point_from_utf8 (const lit_utf8_byte_t *,
                                                lit_utf8_size_t,
                                                lit_code_point_t *);
+
+/* print */
+void lit_put_ecma_char (ecma_char_t);
 
 #endif /* LIT_UNICODE_HELPERS_H */
