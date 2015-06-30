@@ -212,6 +212,34 @@ lit_utf8_iterator_create (const lit_utf8_byte_t *utf8_buf_p, /**< utf-8 string *
 } /* lit_utf8_iterator_create */
 
 /**
+ * Check if we can read from buffer
+ *
+ * @return true, if buffer contains more code units
+ *         false otherwise
+ */
+bool
+lit_utf8_iterator_is_next_read_valid (lit_utf8_iterator_t *buf_iter_p) /**< pointer to iterator */
+{
+  if (lit_utf8_iterator_reached_buffer_end (buf_iter_p))
+  {
+    return false;
+  }
+
+  if (buf_iter_p->code_point)
+  {
+    return true;
+  }
+
+  lit_utf8_size_t utf8_char_size;
+  utf8_char_size = lit_get_unicode_char_size_by_utf8_first_byte (*(buf_iter_p->buf_p + buf_iter_p->buf_offset));
+  if (buf_iter_p->buf_offset + utf8_char_size > buf_iter_p->buf_size)
+  {
+    return false;
+  }
+  return true;
+}
+
+/**
  * Represents code point (>0xFFFF) as surrogate pair and returns its lower part
  *
  * @return lower code_unit of the surrogate pair

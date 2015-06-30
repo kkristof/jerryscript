@@ -45,6 +45,7 @@ bool lit_is_code_unit_high_surrogate (ecma_char_t);
 
 /* iteration */
 lit_utf8_iterator_t lit_utf8_iterator_create (const lit_utf8_byte_t *, lit_utf8_size_t);
+bool lit_utf8_iterator_is_next_read_valid (lit_utf8_iterator_t *);
 ecma_char_t lit_utf8_iterator_read_code_unit (lit_utf8_iterator_t *);
 void lit_utf8_iterator_increment (lit_utf8_iterator_t *);
 ecma_char_t lit_utf8_iterator_read_code_unit_and_increment (lit_utf8_iterator_t *);

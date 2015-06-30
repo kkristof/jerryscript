@@ -56,12 +56,26 @@ current_locus (void)
 static ecma_char_t
 get_char (size_t i)
 {
-  if ((buffer + i) >= (buffer_start + buffer_size))
+  if (buffer >= (buffer_start + buffer_size))
   {
-    return '\0';
+    return ECMA_CHAR_NULL;
   }
 
-  return *(buffer + i);
+  lit_utf8_iterator_t utf8_iterator;
+  utf8_iterator = lit_utf8_iterator_create (buffer, (lit_utf8_size_t) (buffer_start + buffer_size - buffer));
+
+  ecma_char_t code_unit;
+  do
+  {
+    if (!lit_utf8_iterator_is_next_read_valid (&utf8_iterator))
+    {
+      PARSE_ERROR ("Invalid source encoding", buffer + utf8_iterator.buf_offset);
+    }
+    code_unit = lit_utf8_iterator_read_code_unit_and_increment (&utf8_iterator);
+  }
+  while (i--);
+
+  return code_unit;
 }
 
 static void
@@ -618,7 +632,7 @@ parse_name (void)
 
   token known_token = empty_token;
 
-  JERRY_ASSERT (isalpha (c) || c == '$' || c == '_');
+  JERRY_ASSERT (isalpha (c) || c == '$' || c == '_' || c == '\\');
 
   new_token ();
 
@@ -1104,7 +1118,7 @@ lexer_next_token_private (void)
 
   JERRY_ASSERT (token_start == NULL);
 
-  if (isalpha (c) || c == '$' || c == '_')
+  if (isalpha (c) || c == '$' || c == '_' || c == '\\')
   {
     return parse_name ();
   }
