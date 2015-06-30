@@ -297,7 +297,7 @@ lit_char_is_unicode_letter (ecma_char_t c) /**< code unit */
 bool
 lit_char_is_new_line (ecma_char_t c) /**< code unit */
 {
-  return (c == '\x0A');
+  return (c == 0x0A);
 } /* lit_char_is_new_line */
 
 /**
@@ -309,8 +309,32 @@ lit_char_is_new_line (ecma_char_t c) /**< code unit */
 bool
 lit_char_is_carriage_return (ecma_char_t c) /**< code unit */
 {
-  return (c == '\x0D');
+  return (c == 0x0D);
 } /* lit_char_is_carriage_return */
+
+/**
+ * Check if specified character the line separator character
+ *
+ * @return true - if the character is "<LS>" character according to ECMA-262 v5, Table 3,
+ *         false - otherwise.
+ */
+bool
+lit_char_is_line_separator (ecma_char_t c) /**< code unit */
+{
+  return (c == 0x2028);
+} /* lit_char_is_line_separator */
+
+/**
+ * Check if specified character the paragraph separator character
+ *
+ * @return true - if the character is "<PS>" character according to ECMA-262 v5, Table 3,
+ *         false - otherwise.
+ */
+bool
+lit_char_is_paragraph_separator (ecma_char_t c) /**< code unit */
+{
+  return (c == 0x2029);
+} /* lit_char_is_paragraph_separator */
 
 /**
  * Check if specified character is one of LineTerminator (ECMA-262 v5, Table 3) characters
@@ -321,10 +345,10 @@ lit_char_is_carriage_return (ecma_char_t c) /**< code unit */
 bool
 lit_char_is_line_terminator (ecma_char_t c) /**< code unit */
 {
-  /* FIXME: Handle <LS> and <PS> (ECMA-262 v5, 7.3, Table 3) when Unicode would be supported */
-
   return (lit_char_is_carriage_return (c)
-          || lit_char_is_new_line (c));
+          || lit_char_is_new_line (c)
+          || lit_char_is_line_separator (c)
+          || lit_char_is_paragraph_separator (c));
 } /* lit_char_is_line_terminator */
 
 /**
