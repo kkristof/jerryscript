@@ -58,21 +58,19 @@ current_locus (void)
 static ecma_char_t
 get_char (size_t i)
 {
-  lit_utf8_size_t cur_offset = lit_utf8_iterator_get_offset (&src_iter);
+  lit_utf8_iterator_t iter = src_iter;
   ecma_char_t code_unit;
   do
   {
-    if (lit_utf8_iterator_is_eos (&src_iter))
+    if (lit_utf8_iterator_is_eos (&iter))
     {
       code_unit = ECMA_CHAR_NULL;
       break;
     }
 
-    code_unit = lit_utf8_iterator_read_next_and_incr (&src_iter);
+    code_unit = lit_utf8_iterator_read_next_and_incr (&iter);
   }
   while (i--);
-
-  lit_utf8_iterator_set_offset (&src_iter, cur_offset);
 
   return code_unit;
 }
@@ -1572,6 +1570,7 @@ lexer_init (const jerry_api_char_t *source, /**< script source */
 
   buffer_size = source_size;
   buffer_start = source;
+  token_start = NULL;
 
   lexer_set_strict_mode (false);
 
