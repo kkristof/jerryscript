@@ -18,6 +18,11 @@
 
 #include "lit-globals.h"
 
-bool lit_char_is_unicode_letter (ecma_char_t);
+extern bool lit_char_is_unicode_letter (ecma_char_t);
+extern bool lit_char_is_new_line (ecma_char_t);
+extern bool lit_char_is_carriage_return (ecma_char_t);
+extern bool lit_char_is_line_terminator (ecma_char_t);
+extern bool lit_char_is_word_char (ecma_char_t);
+extern bool lit_char_hex_to_int (ecma_char_t);
 
 #endif /* LIT_CHAR_HELPERS_H */
