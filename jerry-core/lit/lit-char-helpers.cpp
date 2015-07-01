@@ -16,28 +16,6 @@
 #include "lit-char-helpers.h"
 
 /**
- * ASCII letter ranges
- */
-#define LIT_CHAR_ASCII_UPPERCASE_BEGIN ((ecma_char_t) 'A') /* uppercase letters */
-#define LIT_CHAR_ASCII_UPPERCASE_END   ((ecma_char_t) 'Z')
-#define LIT_CHAR_ASCII_LOWERCASE_BEGIN ((ecma_char_t) 'a') /* lowercase letters */
-#define LIT_CHAR_ASCII_LOWERCASE_END   ((ecma_char_t) 'z')
-
-/**
- * Ranges for letters, used for hexadecimal digits
- */
-#define LIT_CHAR_ASCII_UPPERCASE_HEX_BEGIN ((ecma_char_t) 'A') /* uppercase */
-#define LIT_CHAR_ASCII_UPPERCASE_HEX_END   ((ecma_char_t) 'F')
-#define LIT_CHAR_ASCII_LOWERCASE_HEX_BEGIN ((ecma_char_t) 'a') /* lowercase */
-#define LIT_CHAR_ASCII_LOWERCASE_HEX_END   ((ecma_char_t) 'f')
-
-/**
- * ASCII digit range
- */
-#define LIT_CHAR_ASCII_DIGITS_BEGIN ((ecma_char_t) '0')
-#define LIT_CHAR_ASCII_DIGITS_END   ((ecma_char_t) '9')
-
-/**
  * Check if specified character is one of the Format-Control characters
  *
  * @return true - if the character one of characters, listed in ECMA-262 v5, Table 1,
@@ -129,10 +107,8 @@ bool
 lit_char_is_unicode_letter (ecma_char_t c) /**< code unit */
 {
   /* Fast path for ASCII-defined letters */
-  if ((c >= LIT_CHAR_ASCII_UPPERCASE_BEGIN
-       && c <= LIT_CHAR_ASCII_UPPERCASE_END)
-      || (c >= LIT_CHAR_ASCII_LOWERCASE_BEGIN
-          && c <= LIT_CHAR_ASCII_LOWERCASE_END))
+  if ((c >= LIT_CHAR_ASCII_UPPERCASE_LETTERS_BEGIN && c <= LIT_CHAR_ASCII_UPPERCASE_LETTERS_END)
+      || (c >= LIT_CHAR_ASCII_LOWERCASE_LETTERS_BEGIN && c <= LIT_CHAR_ASCII_LOWERCASE_LETTERS_END))
   {
     return true;
   }
@@ -287,12 +263,9 @@ lit_char_is_unicode_connector_punctuation (ecma_char_t c) /**< code unit */
 bool
 lit_char_is_word_char (ecma_char_t c) /**< code unit */
 {
-  if ((c >= LIT_CHAR_ASCII_UPPERCASE_BEGIN
-       && c <= LIT_CHAR_ASCII_UPPERCASE_END)
-      || (c >= LIT_CHAR_ASCII_LOWERCASE_BEGIN
-          && c <= LIT_CHAR_ASCII_LOWERCASE_END)
-      || (c >= LIT_CHAR_ASCII_DIGITS_BEGIN
-          && c <= LIT_CHAR_ASCII_DIGITS_END)
+  if ((c >= LIT_CHAR_ASCII_UPPERCASE_LETTERS_BEGIN && c <= LIT_CHAR_ASCII_UPPERCASE_LETTERS_END)
+      || (c >= LIT_CHAR_ASCII_LOWERCASE_LETTERS_BEGIN && c <= LIT_CHAR_ASCII_LOWERCASE_LETTERS_END)
+      || (c >= LIT_CHAR_ASCII_DIGITS_BEGIN && c <= LIT_CHAR_ASCII_DIGITS_END)
       || c == LIT_CHAR_UNDERSCORE)
   {
     return true;
@@ -310,21 +283,18 @@ uint32_t
 lit_char_hex_to_int (ecma_char_t c) /**< code unit, corresponding to
                                      *    one of [0-9A-Fa-f] characters */
 {
-  if (c >= LIT_CHAR_ASCII_DIGITS_BEGIN
-      && c <= LIT_CHAR_ASCII_DIGITS_END)
+  if (c >= LIT_CHAR_ASCII_DIGITS_BEGIN && c <= LIT_CHAR_ASCII_DIGITS_END)
   {
     return (uint32_t) (c - LIT_CHAR_ASCII_DIGITS_BEGIN);
   }
-  else if (c >= LIT_CHAR_ASCII_UPPERCASE_HEX_BEGIN
-           && c <= LIT_CHAR_ASCII_UPPERCASE_HEX_END)
+  else if (c >= LIT_CHAR_ASCII_UPPERCASE_LETTERS_HEX_BEGIN && c <= LIT_CHAR_ASCII_UPPERCASE_LETTERS_HEX_END)
   {
-    return (uint32_t) (c - LIT_CHAR_ASCII_UPPERCASE_HEX_BEGIN);
+    return (uint32_t) (c - LIT_CHAR_ASCII_UPPERCASE_LETTERS_HEX_BEGIN);
   }
   else
   {
-    JERRY_ASSERT (c >= LIT_CHAR_ASCII_LOWERCASE_HEX_BEGIN
-                  && c <= LIT_CHAR_ASCII_LOWERCASE_HEX_END);
+    JERRY_ASSERT (c >= LIT_CHAR_ASCII_LOWERCASE_LETTERS_HEX_BEGIN && c <= LIT_CHAR_ASCII_LOWERCASE_LETTERS_HEX_END);
 
-    return (uint32_t) (c - LIT_CHAR_ASCII_LOWERCASE_HEX_BEGIN);
+    return (uint32_t) (c - LIT_CHAR_ASCII_LOWERCASE_LETTERS_HEX_BEGIN);
   }
 } /* lit_char_hex_to_int */

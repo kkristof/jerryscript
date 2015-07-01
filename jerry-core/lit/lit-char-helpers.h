@@ -95,6 +95,96 @@ extern bool lit_char_is_unicode_connector_punctuation (ecma_char_t);
 #define LIT_CHAR_QUESTION     ((ecma_char_t) '?') /* question mark */
 #define LIT_CHAR_COLON        ((ecma_char_t) ':') /* colon */
 
+/**
+ * Uppercase ASCII letters
+ */
+#define LIT_CHAR_UPPERCASE_A ((ecma_char_t) 'A')
+#define LIT_CHAR_UPPERCASE_B ((ecma_char_t) 'B')
+#define LIT_CHAR_UPPERCASE_C ((ecma_char_t) 'C')
+#define LIT_CHAR_UPPERCASE_D ((ecma_char_t) 'D')
+#define LIT_CHAR_UPPERCASE_E ((ecma_char_t) 'E')
+#define LIT_CHAR_UPPERCASE_F ((ecma_char_t) 'F')
+#define LIT_CHAR_UPPERCASE_G ((ecma_char_t) 'G')
+#define LIT_CHAR_UPPERCASE_H ((ecma_char_t) 'H')
+#define LIT_CHAR_UPPERCASE_I ((ecma_char_t) 'I')
+#define LIT_CHAR_UPPERCASE_J ((ecma_char_t) 'J')
+#define LIT_CHAR_UPPERCASE_K ((ecma_char_t) 'K')
+#define LIT_CHAR_UPPERCASE_L ((ecma_char_t) 'L')
+#define LIT_CHAR_UPPERCASE_M ((ecma_char_t) 'M')
+#define LIT_CHAR_UPPERCASE_N ((ecma_char_t) 'N')
+#define LIT_CHAR_UPPERCASE_O ((ecma_char_t) 'O')
+#define LIT_CHAR_UPPERCASE_P ((ecma_char_t) 'P')
+#define LIT_CHAR_UPPERCASE_Q ((ecma_char_t) 'Q')
+#define LIT_CHAR_UPPERCASE_R ((ecma_char_t) 'R')
+#define LIT_CHAR_UPPERCASE_S ((ecma_char_t) 'S')
+#define LIT_CHAR_UPPERCASE_T ((ecma_char_t) 'T')
+#define LIT_CHAR_UPPERCASE_U ((ecma_char_t) 'U')
+#define LIT_CHAR_UPPERCASE_V ((ecma_char_t) 'V')
+#define LIT_CHAR_UPPERCASE_W ((ecma_char_t) 'W')
+#define LIT_CHAR_UPPERCASE_X ((ecma_char_t) 'X')
+#define LIT_CHAR_UPPERCASE_Y ((ecma_char_t) 'Y')
+#define LIT_CHAR_UPPERCASE_Z ((ecma_char_t) 'Z')
+
+/**
+ * Lowercase ASCII letters
+ */
+#define LIT_CHAR_LOWERCASE_A ((ecma_char_t) 'a')
+#define LIT_CHAR_LOWERCASE_B ((ecma_char_t) 'b')
+#define LIT_CHAR_LOWERCASE_C ((ecma_char_t) 'c')
+#define LIT_CHAR_LOWERCASE_D ((ecma_char_t) 'd')
+#define LIT_CHAR_LOWERCASE_E ((ecma_char_t) 'e')
+#define LIT_CHAR_LOWERCASE_F ((ecma_char_t) 'f')
+#define LIT_CHAR_LOWERCASE_G ((ecma_char_t) 'g')
+#define LIT_CHAR_LOWERCASE_H ((ecma_char_t) 'h')
+#define LIT_CHAR_LOWERCASE_I ((ecma_char_t) 'i')
+#define LIT_CHAR_LOWERCASE_J ((ecma_char_t) 'j')
+#define LIT_CHAR_LOWERCASE_K ((ecma_char_t) 'k')
+#define LIT_CHAR_LOWERCASE_L ((ecma_char_t) 'l')
+#define LIT_CHAR_LOWERCASE_M ((ecma_char_t) 'm')
+#define LIT_CHAR_LOWERCASE_N ((ecma_char_t) 'n')
+#define LIT_CHAR_LOWERCASE_O ((ecma_char_t) 'o')
+#define LIT_CHAR_LOWERCASE_P ((ecma_char_t) 'p')
+#define LIT_CHAR_LOWERCASE_Q ((ecma_char_t) 'q')
+#define LIT_CHAR_LOWERCASE_R ((ecma_char_t) 'r')
+#define LIT_CHAR_LOWERCASE_S ((ecma_char_t) 's')
+#define LIT_CHAR_LOWERCASE_T ((ecma_char_t) 't')
+#define LIT_CHAR_LOWERCASE_U ((ecma_char_t) 'u')
+#define LIT_CHAR_LOWERCASE_V ((ecma_char_t) 'v')
+#define LIT_CHAR_LOWERCASE_W ((ecma_char_t) 'w')
+#define LIT_CHAR_LOWERCASE_X ((ecma_char_t) 'x')
+#define LIT_CHAR_LOWERCASE_Y ((ecma_char_t) 'y')
+#define LIT_CHAR_LOWERCASE_Z ((ecma_char_t) 'z')
+
+/**
+ * ASCII decimal digits
+ */
+#define LIT_CHAR_0    ((ecma_char_t) '0')
+#define LIT_CHAR_1    ((ecma_char_t) '1')
+#define LIT_CHAR_2    ((ecma_char_t) '2')
+#define LIT_CHAR_3    ((ecma_char_t) '3')
+#define LIT_CHAR_4    ((ecma_char_t) '4')
+#define LIT_CHAR_5    ((ecma_char_t) '5')
+#define LIT_CHAR_6    ((ecma_char_t) '6')
+#define LIT_CHAR_7    ((ecma_char_t) '7')
+#define LIT_CHAR_8    ((ecma_char_t) '8')
+#define LIT_CHAR_9    ((ecma_char_t) '9')
+
+/**
+ * ASCII character ranges
+ */
+#define LIT_CHAR_ASCII_UPPERCASE_LETTERS_BEGIN      LIT_CHAR_UPPERCASE_A /* uppercase letters range */
+#define LIT_CHAR_ASCII_UPPERCASE_LETTERS_END        LIT_CHAR_UPPERCASE_Z
+#define LIT_CHAR_ASCII_LOWERCASE_LETTERS_BEGIN      LIT_CHAR_LOWERCASE_A /* lowercase letters range */
+#define LIT_CHAR_ASCII_LOWERCASE_LETTERS_END        LIT_CHAR_LOWERCASE_Z
+#define LIT_CHAR_ASCII_UPPERCASE_LETTERS_HEX_BEGIN  LIT_CHAR_UPPERCASE_A /* uppercase letters for
+                                                                          * hexadecimal digits range */
+#define LIT_CHAR_ASCII_UPPERCASE_LETTERS_HEX_END    LIT_CHAR_UPPERCASE_F
+#define LIT_CHAR_ASCII_LOWERCASE_LETTERS_HEX_BEGIN  LIT_CHAR_LOWERCASE_A /* lowercase letters for
+                                                                          * hexadecimal digits range */
+#define LIT_CHAR_ASCII_LOWERCASE_LETTERS_HEX_END    LIT_CHAR_LOWERCASE_F
+#define LIT_CHAR_ASCII_DIGITS_BEGIN                 LIT_CHAR_0           /* decimal digits range */
+#define LIT_CHAR_ASCII_DIGITS_END                   LIT_CHAR_9
+
 /*
  * Part of IsWordChar abstract operation (ECMA-262 v5, 15.10.2.6, step 3)
  */
