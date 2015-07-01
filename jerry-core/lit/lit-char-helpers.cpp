@@ -259,7 +259,7 @@ lit_char_is_low_line (ecma_char_t c) /**< code unit */
 bool
 lit_char_is_backslash (ecma_char_t c) /**< code unit */
 {
-  return (c == '\');
+  return (c == '\\');
 } /* lit_char_is_backslash */
 
 /**
