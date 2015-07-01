@@ -107,8 +107,8 @@ bool
 lit_char_is_unicode_letter (ecma_char_t c) /**< code unit */
 {
   /* Fast path for ASCII-defined letters */
-  if ((c >= LIT_CHAR_ASCII_UPPERCASE_LETTERS_BEGIN && c <= LIT_CHAR_ASCII_UPPERCASE_LETTERS_END)
-      || (c >= LIT_CHAR_ASCII_LOWERCASE_LETTERS_BEGIN && c <= LIT_CHAR_ASCII_LOWERCASE_LETTERS_END))
+  if ((c >= LIT_CHAR_ASCII_LOWERCASE_LETTERS_BEGIN && c <= LIT_CHAR_ASCII_LOWERCASE_LETTERS_END)
+      || (c >= LIT_CHAR_ASCII_UPPERCASE_LETTERS_BEGIN && c <= LIT_CHAR_ASCII_UPPERCASE_LETTERS_END))
   {
     return true;
   }
@@ -263,8 +263,8 @@ lit_char_is_unicode_connector_punctuation (ecma_char_t c) /**< code unit */
 bool
 lit_char_is_word_char (ecma_char_t c) /**< code unit */
 {
-  if ((c >= LIT_CHAR_ASCII_UPPERCASE_LETTERS_BEGIN && c <= LIT_CHAR_ASCII_UPPERCASE_LETTERS_END)
-      || (c >= LIT_CHAR_ASCII_LOWERCASE_LETTERS_BEGIN && c <= LIT_CHAR_ASCII_LOWERCASE_LETTERS_END)
+  if ((c >= LIT_CHAR_ASCII_LOWERCASE_LETTERS_BEGIN && c <= LIT_CHAR_ASCII_LOWERCASE_LETTERS_END)
+      || (c >= LIT_CHAR_ASCII_UPPERCASE_LETTERS_BEGIN && c <= LIT_CHAR_ASCII_UPPERCASE_LETTERS_END)
       || (c >= LIT_CHAR_ASCII_DIGITS_BEGIN && c <= LIT_CHAR_ASCII_DIGITS_END)
       || c == LIT_CHAR_UNDERSCORE)
   {
@@ -287,14 +287,14 @@ lit_char_hex_to_int (ecma_char_t c) /**< code unit, corresponding to
   {
     return (uint32_t) (c - LIT_CHAR_ASCII_DIGITS_BEGIN);
   }
-  else if (c >= LIT_CHAR_ASCII_UPPERCASE_LETTERS_HEX_BEGIN && c <= LIT_CHAR_ASCII_UPPERCASE_LETTERS_HEX_END)
+  else if (c >= LIT_CHAR_ASCII_LOWERCASE_LETTERS_HEX_BEGIN && c <= LIT_CHAR_ASCII_LOWERCASE_LETTERS_HEX_END)
   {
-    return (uint32_t) (c - LIT_CHAR_ASCII_UPPERCASE_LETTERS_HEX_BEGIN);
+    return (uint32_t) (c - LIT_CHAR_ASCII_LOWERCASE_LETTERS_HEX_BEGIN);
   }
   else
   {
-    JERRY_ASSERT (c >= LIT_CHAR_ASCII_LOWERCASE_LETTERS_HEX_BEGIN && c <= LIT_CHAR_ASCII_LOWERCASE_LETTERS_HEX_END);
+    JERRY_ASSERT (c >= LIT_CHAR_ASCII_UPPERCASE_LETTERS_HEX_BEGIN && c <= LIT_CHAR_ASCII_UPPERCASE_LETTERS_HEX_END);
 
-    return (uint32_t) (c - LIT_CHAR_ASCII_LOWERCASE_LETTERS_HEX_BEGIN);
+    return (uint32_t) (c - LIT_CHAR_ASCII_UPPERCASE_LETTERS_HEX_BEGIN);
   }
 } /* lit_char_hex_to_int */

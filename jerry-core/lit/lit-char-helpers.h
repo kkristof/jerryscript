@@ -35,7 +35,7 @@ extern bool lit_char_is_format_control (ecma_char_t);
 #define LIT_CHAR_FF   ((ecma_char_t) 0x000C) /* form feed */
 #define LIT_CHAR_SP   ((ecma_char_t) 0x0020) /* space */
 #define LIT_CHAR_NBSP ((ecma_char_t) 0x00A0) /* no-break space */
-// #define LIT_CHAR_BOM  ((ecma_char_t) 0xFEFF) /* byte order mark */
+/* LIT_CHAR_BOM is defined above */
 
 extern bool lit_char_is_space_separator (ecma_char_t);
 extern bool lit_char_is_white_space (ecma_char_t);
@@ -85,7 +85,7 @@ extern bool lit_char_is_unicode_connector_punctuation (ecma_char_t);
 #define LIT_CHAR_EQUAL        ((ecma_char_t) '=') /* equals sign */
 #define LIT_CHAR_PLUS         ((ecma_char_t) '+') /* plus sign */
 #define LIT_CHAR_MINUS        ((ecma_char_t) '-') /* hyphen-minus */
-// #define LIT_CHAR_ASTERISK     ((ecma_char_t) '*') /* asterisk */
+/* LIT_CHAR_ASTERISK is defined above */
 #define LIT_CHAR_PERCENT      ((ecma_char_t) '%') /* percent sign */
 #define LIT_CHAR_AMPERSAND    ((ecma_char_t) '&') /* ampersand */
 #define LIT_CHAR_VLINE        ((ecma_char_t) '|') /* vertical line */
