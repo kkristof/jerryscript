@@ -16,6 +16,56 @@
 #include "lit-char-helpers.h"
 
 /**
+ * Check if specified character is the zero width non-joiner character
+ *
+ * @return true - if the character is "<ZWNJ>" character according to ECMA-262 v5, Table 1,
+ *         false - otherwise.
+ */
+bool
+lit_char_is_zero_width_non_joiner (ecma_char_t c) /**< code unit */
+{
+  return (c == 0x200C);
+} /* lit_char_is_zero_width_non_joiner */
+
+/**
+ * Check if specified character is the zero width joiner character
+ *
+ * @return true - if the character is "<ZWJ>" character according to ECMA-262 v5, Table 1,
+ *         false - otherwise.
+ */
+bool
+lit_char_is_zero_width_joiner (ecma_char_t c) /**< code unit */
+{
+  return (c == 0x200D);
+} /* lit_char_is_zero_width_joiner */
+
+/**
+ * Check if specified character is the Byte Order Mark character
+ *
+ * @return true - if the character is "<BOM>" character according to ECMA-262 v5, Table 1,
+ *         false - otherwise.
+ */
+bool
+lit_char_is_byte_order_mark (ecma_char_t c) /**< code unit */
+{
+  return (c == 0xFEFF);
+} /* lit_char_is_byte_order_mark */
+
+/**
+ * Check if specified character is one of the format control characters
+ *
+ * @return true - if the character is "" character according to ECMA-262 v5, Table 1,
+ *         false - otherwise.
+ */
+bool
+lit_char_is_format_control (ecma_char_t c) /**< code unit */
+{
+  return (lit_char_is_zero_width_non_joiner (c)
+          || lit_char_is_zero_width_joiner (c)
+          || lit_char_is_byte_order_mark (c));
+} /* lit_char_is_format_control */
+
+/**
  * Check if specified character is the newline character
  *
  * @return true - if the character is "<LF>" character according to ECMA-262 v5, Table 3,
