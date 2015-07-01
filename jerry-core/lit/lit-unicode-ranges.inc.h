@@ -20,7 +20,7 @@
  *          http://www.unicode.org/Public/3.0-Update/UnicodeData-3.0.0.txt
  *          http://www.unicode.org/Public/3.0-Update/UnicodeData-3.0.0.html
  *
- * The ranges lists were generated using tools/print_unicode_ranges.sh script from UnicodeData-3.0.0.txt
+ * The range lists were generated using tools/print_unicode_ranges.sh script from UnicodeData-3.0.0.txt
  */
 
 /**
@@ -29,7 +29,6 @@
 #ifndef LIT_UNICODE_RANGE_LU
 # define LIT_UNICODE_RANGE_LU(range_begin, range_end)
 #endif /* !LIT_UNICODE_RANGE_LU */
-
 LIT_UNICODE_RANGE_LU (0x0041, 0x005A)
 LIT_UNICODE_RANGE_LU (0x00C0, 0x00D6)
 LIT_UNICODE_RANGE_LU (0x00D8, 0x00DE)
