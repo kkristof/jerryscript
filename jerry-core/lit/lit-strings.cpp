@@ -17,53 +17,7 @@
 
 #include "jrt-libc-includes.h"
 
-/**
- * For the formal definition of Unicode transformation formats (UTF) see Section 3.9, Unicode Encoding Forms in The
- * Unicode Standard (http://www.unicode.org/versions/Unicode7.0.0/ch03.pdf#G7404, tables 3-6, 3-7).
- */
-#define LIT_UNICODE_CODE_POINT_NULL (0x0)
-#define LIT_UNICODE_CODE_POINT_MAX (0x10FFFF)
-
-#define LIT_UTF16_CODE_UNIT_MAX (0xFFFF)
-#define LIT_UTF16_FIRST_SURROGATE_CODE_POINT (0x10000)
-#define LIT_UTF16_LOW_SURROGATE_MARKER (0xDC00)
-#define LIT_UTF16_HIGH_SURROGATE_MARKER (0xD800)
-#define LIT_UTF16_HIGH_SURROGATE_MIN (0xD800)
-#define LIT_UTF16_HIGH_SURROGATE_MAX (0xDBFF)
-#define LIT_UTF16_LOW_SURROGATE_MIN (0xDC00)
-#define LIT_UTF16_LOW_SURROGATE_MAX (0xDFFF)
-#define LIT_UTF16_BITS_IN_SURROGATE (10)
-#define LIT_UTF16_LAST_10_BITS_MASK (0x3FF)
-
-#define LIT_UTF8_1_BYTE_MARKER (0x00)
-#define LIT_UTF8_2_BYTE_MARKER (0xC0)
-#define LIT_UTF8_3_BYTE_MARKER (0xE0)
-#define LIT_UTF8_4_BYTE_MARKER (0xF0)
-#define LIT_UTF8_EXTRA_BYTE_MARKER (0x80)
-
-#define LIT_UTF8_1_BYTE_MASK (0x80)
-#define LIT_UTF8_2_BYTE_MASK (0xE0)
-#define LIT_UTF8_3_BYTE_MASK (0xF0)
-#define LIT_UTF8_4_BYTE_MASK (0xF8)
-#define LIT_UTF8_EXTRA_BYTE_MASK (0xC0)
-
-#define LIT_UTF8_LAST_7_BITS_MASK (0x7F)
-#define LIT_UTF8_LAST_6_BITS_MASK (0x3F)
-#define LIT_UTF8_LAST_5_BITS_MASK (0x1F)
-#define LIT_UTF8_LAST_4_BITS_MASK (0x0F)
-#define LIT_UTF8_LAST_3_BITS_MASK (0x07)
-#define LIT_UTF8_LAST_2_BITS_MASK (0x03)
-#define LIT_UTF8_LAST_1_BIT_MASK  (0x01)
-
-#define LIT_UTF8_BITS_IN_EXTRA_BYTES (6)
-
-#define LIT_UTF8_1_BYTE_CODE_POINT_MAX (0x7F)
-#define LIT_UTF8_2_BYTE_CODE_POINT_MIN (0x80)
-#define LIT_UTF8_2_BYTE_CODE_POINT_MAX (0x7FF)
-#define LIT_UTF8_3_BYTE_CODE_POINT_MIN (0x800)
-#define LIT_UTF8_3_BYTE_CODE_POINT_MAX (LIT_UTF16_CODE_UNIT_MAX)
-#define LIT_UTF8_4_BYTE_CODE_POINT_MIN (0x1000)
-#define LIT_UTF8_4_BYTE_CODE_POINT_MAX (LIT_UNICODE_CODE_POINT_MAX)
+JERRY_STATIC_ASSERT (sizeof (lit_utf8_iterator_pos_t) == sizeof (lit_utf8_size_t));
 
 /**
  * Validate utf-8 string
@@ -203,14 +157,75 @@ lit_utf8_iterator_create (const lit_utf8_byte_t *utf8_buf_p, /**< utf-8 string *
 
   lit_utf8_iterator_t buf_iter =
   {
-    0,
-    buf_size,
     utf8_buf_p,
-    false,
+    buf_size,
+    {
+      0,
+      false
+    }
   };
 
   return buf_iter;
 } /* lit_utf8_iterator_create */
+
+/**
+ * Reset iterator to point to the beginning of a string
+ */
+void
+lit_utf8_iterator_set_to_bos (lit_utf8_iterator_t *iter_p) /**< iterator to reset */
+{
+  iter_p->buf_pos.offset = 0;
+  iter_p->buf_pos.is_non_bmp_middle = false;
+} /* lit_utf8_iterator_set_to_bos */
+
+/**
+ * Reset iterator to point to the end of a string
+ */
+void
+lit_utf8_iterator_set_to_eos (lit_utf8_iterator_t *iter_p) /**< iterator to reset */
+{
+  iter_p->buf_pos.offset = iter_p->buf_size & LIT_ITERATOR_OFFSET_MASK;
+  iter_p->buf_pos.is_non_bmp_middle = false;
+} /* lit_utf8_iterator_set_to_eos */
+
+/**
+ * Save iterator's position to restore it later
+ *
+ * @return current position of the iterator
+ */
+lit_utf8_iterator_pos_t
+lit_utf8_iterator_get_pos (const lit_utf8_iterator_t *iter_p)
+{
+  return iter_p->buf_pos;
+} /* lit_utf8_iterator_get_pos */
+
+/**
+ * Restore previously saved position of the iterator
+ */
+void
+lit_utf8_iterator_restore_pos (lit_utf8_iterator_t *iter_p, /**< utf-8 string iterator */
+                               lit_utf8_iterator_pos_t iter_pos) /**< position to restore */
+{
+  JERRY_ASSERT (iter_pos.offset <= iter_p->buf_size);
+#ifndef JERRY_NDEBUG
+  lit_utf8_byte_t byte = *(iter_p->buf_p + iter_pos.offset);
+  JERRY_ASSERT ((byte & LIT_UTF8_EXTRA_BYTE_MASK) != LIT_UTF8_EXTRA_BYTE_MARKER);
+  JERRY_ASSERT (!iter_pos.is_non_bmp_middle || ((byte & LIT_UTF8_4_BYTE_MASK) == LIT_UTF8_4_BYTE_MARKER));
+#endif
+
+  iter_p->buf_pos = iter_pos;
+} /* lit_utf8_iterator_restore_pos */
+
+/**
+ * Get offset (in code units) of the iterator
+ *
+ * @return current offset of the iterator in code units
+ */
+ecma_length_t
+lit_utf8_iterator_get_index (const lit_utf8_iterator_t *iter_p)
+{
+  return lit_utf8_string_length (iter_p->buf_p, iter_p->buf_pos.offset) + iter_p->buf_pos.is_non_bmp_middle;
+} /* lit_utf8_iterator_get_index */
 
 /**
  * Represents code point (>0xFFFF) as surrogate pair and returns its lower part
@@ -251,13 +266,13 @@ convert_code_point_to_high_surrogate (lit_code_point_t code_point) /**< code poi
  * @return next code unit
  */
 ecma_char_t
-lit_utf8_iterator_read_next (const lit_utf8_iterator_t *buf_iter_p) /**< @in-out: utf-8 string iterator */
+lit_utf8_iterator_read_next (const lit_utf8_iterator_t *iter_p) /**< @in: utf-8 string iterator */
 {
-  JERRY_ASSERT (!lit_utf8_iterator_is_eos (buf_iter_p));
+  JERRY_ASSERT (!lit_utf8_iterator_is_eos (iter_p));
 
   lit_code_point_t code_point;
-  lit_read_code_point_from_utf8 (buf_iter_p->buf_p + buf_iter_p->buf_offset,
-                                 buf_iter_p->buf_size - buf_iter_p->buf_offset,
+  lit_read_code_point_from_utf8 (iter_p->buf_p + iter_p->buf_pos.offset,
+                                 iter_p->buf_size - iter_p->buf_pos.offset,
                                  &code_point);
 
   if (code_point <= LIT_UTF16_CODE_UNIT_MAX)
@@ -266,7 +281,7 @@ lit_utf8_iterator_read_next (const lit_utf8_iterator_t *buf_iter_p) /**< @in-out
   }
   else
   {
-    if (buf_iter_p->is_non_bmp_middle)
+    if (iter_p->buf_pos.is_non_bmp_middle)
     {
       return convert_code_point_to_low_surrogate (code_point);
     }
@@ -278,14 +293,65 @@ lit_utf8_iterator_read_next (const lit_utf8_iterator_t *buf_iter_p) /**< @in-out
 } /* lit_utf8_iterator_read_next */
 
 /**
+ * Get previous code unit form the iterated string
+ *
+ * @return previous code unit
+ */
+ecma_char_t
+lit_utf8_iterator_read_prev (const lit_utf8_iterator_t *iter_p) /**< @in: utf-8 string iterator */
+{
+  JERRY_ASSERT (!lit_utf8_iterator_is_bos (iter_p));
+
+  lit_code_point_t code_point;
+  lit_utf8_size_t offset = iter_p->buf_pos.offset;
+
+  if (iter_p->buf_pos.is_non_bmp_middle)
+  {
+    lit_read_code_point_from_utf8 (iter_p->buf_p + iter_p->buf_pos.offset,
+                                   iter_p->buf_size - iter_p->buf_pos.offset,
+                                   &code_point);
+    return convert_code_point_to_high_surrogate (code_point);
+  }
+
+  do
+  {
+    JERRY_ASSERT (offset != 0);
+    offset--;
+  }
+  while ((iter_p->buf_p[offset] & LIT_UTF8_EXTRA_BYTE_MASK) == LIT_UTF8_EXTRA_BYTE_MARKER);
+
+  JERRY_ASSERT (iter_p->buf_pos.offset - offset <= LIT_UTF8_MAX_BYTES_IN_CODE_POINT);
+
+  lit_read_code_point_from_utf8 (iter_p->buf_p + offset,
+                                 iter_p->buf_size - offset,
+                                 &code_point);
+
+  if (code_point <= LIT_UTF16_CODE_UNIT_MAX)
+  {
+    return (ecma_char_t) code_point;
+  }
+  else
+  {
+    return convert_code_point_to_low_surrogate (code_point);
+  }
+} /* lit_utf8_iterator_read_prev */
+
+/**
  * Increment iterator to point to next code unit
  */
 void
-lit_utf8_iterator_incr (lit_utf8_iterator_t *buf_iter_p) /**< @in-out: utf-8 string iterator */
+lit_utf8_iterator_incr (lit_utf8_iterator_t *iter_p) /**< @in-out: utf-8 string iterator */
 {
-  lit_utf8_iterator_read_next_and_incr (buf_iter_p);
+  lit_utf8_iterator_read_next_and_incr (iter_p);
 } /* lit_utf8_iterator_read_next_and_incr */
 
+/**
+ * Decrement iterator to point to previous code unit
+ */
+void lit_utf8_iterator_decr (lit_utf8_iterator_t *iter_p) /**< @in-out: utf-8 string iterator */
+{
+  lit_utf8_iterator_read_prev_and_decr (iter_p);
+} /* lit_utf8_iterator_decr */
 
 /**
  * Skip specified number of code units
@@ -298,6 +364,129 @@ void lit_utf8_iterator_advance (lit_utf8_iterator_t *iter_p, /**< in-out: iterat
     lit_utf8_iterator_incr (iter_p);
   }
 } /* lit_utf8_iterator_advance */
+
+/**
+ * Get next code unit form the iterated string and increment iterator to point to next code unit
+ *
+ * @return next code unit
+ */
+ecma_char_t
+lit_utf8_iterator_read_next_and_incr (lit_utf8_iterator_t *iter_p) /**< @in-out: utf-8 string iterator */
+{
+  JERRY_ASSERT (!lit_utf8_iterator_is_eos (iter_p));
+
+  lit_code_point_t code_point;
+  lit_utf8_size_t utf8_char_size = lit_read_code_point_from_utf8 (iter_p->buf_p + iter_p->buf_pos.offset,
+                                                                  iter_p->buf_size - iter_p->buf_pos.offset,
+                                                                  &code_point);
+
+  if (code_point <= LIT_UTF16_CODE_UNIT_MAX)
+  {
+    iter_p->buf_pos.offset = (iter_p->buf_pos.offset + utf8_char_size) & LIT_ITERATOR_OFFSET_MASK;
+    return (ecma_char_t) code_point;
+  }
+  else
+  {
+    if (iter_p->buf_pos.is_non_bmp_middle)
+    {
+      iter_p->buf_pos.offset = (iter_p->buf_pos.offset + utf8_char_size) & LIT_ITERATOR_OFFSET_MASK;
+      iter_p->buf_pos.is_non_bmp_middle = false;
+      return convert_code_point_to_low_surrogate (code_point);
+    }
+    else
+    {
+      iter_p->buf_pos.is_non_bmp_middle = true;
+      return convert_code_point_to_high_surrogate (code_point);
+    }
+  }
+} /* lit_utf8_iterator_read_next_and_incr */
+
+/**
+ * Get previous code unit form the iterated string and decrement iterator to point to previous code unit
+ *
+ * @return previous code unit
+ */
+ecma_char_t
+lit_utf8_iterator_read_prev_and_decr (lit_utf8_iterator_t *iter_p) /**< @in-out: utf-8 string iterator */
+{
+  JERRY_ASSERT (!lit_utf8_iterator_is_bos (iter_p));
+
+  lit_code_point_t code_point;
+  lit_utf8_size_t offset = iter_p->buf_pos.offset;
+
+  if (iter_p->buf_pos.is_non_bmp_middle)
+  {
+    lit_read_code_point_from_utf8 (iter_p->buf_p + iter_p->buf_pos.offset,
+                                   iter_p->buf_size - iter_p->buf_pos.offset,
+                                   &code_point);
+
+    iter_p->buf_pos.is_non_bmp_middle = false;
+
+    return convert_code_point_to_high_surrogate (code_point);
+  }
+
+  do
+  {
+    JERRY_ASSERT (offset != 0);
+    offset--;
+  }
+  while ((iter_p->buf_p[offset] & LIT_UTF8_EXTRA_BYTE_MASK) == LIT_UTF8_EXTRA_BYTE_MARKER);
+
+  JERRY_ASSERT (iter_p->buf_pos.offset - offset <= LIT_UTF8_MAX_BYTES_IN_CODE_POINT);
+
+  iter_p->buf_pos.offset = (offset) & LIT_ITERATOR_OFFSET_MASK;
+  lit_read_code_point_from_utf8 (iter_p->buf_p + iter_p->buf_pos.offset,
+                                 iter_p->buf_size - iter_p->buf_pos.offset,
+                                 &code_point);
+
+  if (code_point <= LIT_UTF16_CODE_UNIT_MAX)
+  {
+    return (ecma_char_t) code_point;
+  }
+  else
+  {
+    iter_p->buf_pos.is_non_bmp_middle = true;
+
+    return convert_code_point_to_low_surrogate (code_point);
+  }
+} /* lit_utf8_iterator_read_prev_and_decr */
+
+/**
+ * Checks iterator reached end of the string
+ *
+ * @return true - iterator is at the end of string
+ *         false - otherwise
+ */
+bool
+lit_utf8_iterator_is_eos (const lit_utf8_iterator_t *iter_p) /**< utf-8 string iterator */
+{
+  JERRY_ASSERT (iter_p->buf_pos.offset <= iter_p->buf_size);
+
+  return (iter_p->buf_pos.offset == iter_p->buf_size);
+} /* lit_utf8_iterator_is_eos */
+
+/**
+ * Checks iterator reached beginning of the string
+ *
+ * @return true - iterator is at the beginning of a string
+ *         false - otherwise
+ */
+bool
+lit_utf8_iterator_is_bos (const lit_utf8_iterator_t *iter_p)
+{
+  return (iter_p->buf_pos.offset == 0 && iter_p->buf_pos.is_non_bmp_middle == false);
+} /* lit_utf8_iterator_is_bos */
+
+/**
+ * Get offset of the iterator
+ *
+ * @return: current offset in bytes of the iterator from the beginning of buffer
+ */
+lit_utf8_size_t
+lit_utf8_iterator_get_offset (const lit_utf8_iterator_t *iter_p) /**< iterator */
+{
+  return iter_p->buf_pos.offset;
+} /* lit_utf8_iterator_get_offset */
 
 /**
  * Set iterator to point to specified offset
@@ -315,56 +504,9 @@ lit_utf8_iterator_set_offset (lit_utf8_iterator_t *iter_p, /**< pointer to itera
   }
 #endif
 
-  iter_p->buf_offset = offset;
-  iter_p->is_non_bmp_middle = false;
+  iter_p->buf_pos.offset = (offset) & LIT_ITERATOR_OFFSET_MASK;
+  iter_p->buf_pos.is_non_bmp_middle = false;
 } /* lit_utf8_iterator_set_offset */
-
-/**
- * Get next code unit form the iterated string and increment iterator to point to next code unit
- *
- * @return next code unit
- */
-ecma_char_t
-lit_utf8_iterator_read_next_and_incr (lit_utf8_iterator_t *buf_iter_p) /**< @in-out: utf-8 string iterator */
-{
-  JERRY_ASSERT (!lit_utf8_iterator_is_eos (buf_iter_p));
-
-  lit_code_point_t code_point;
-  lit_utf8_size_t utf8_char_size = lit_read_code_point_from_utf8 (buf_iter_p->buf_p + buf_iter_p->buf_offset,
-                                                                  buf_iter_p->buf_size - buf_iter_p->buf_offset,
-                                                                  &code_point);
-
-  if (code_point <= LIT_UTF16_CODE_UNIT_MAX)
-  {
-    buf_iter_p->buf_offset += utf8_char_size;
-    return (ecma_char_t) code_point;
-  }
-  else
-  {
-    if (buf_iter_p->is_non_bmp_middle)
-    {
-      buf_iter_p->buf_offset += utf8_char_size;
-      buf_iter_p->is_non_bmp_middle = false;
-      return convert_code_point_to_low_surrogate (code_point);
-    }
-    else
-    {
-      buf_iter_p->is_non_bmp_middle = true;
-      return convert_code_point_to_high_surrogate (code_point);
-    }
-  }
-} /* lit_utf8_iterator_read_next_and_incr */
-
-/**
- * Get offset of the iterator
- *
- * @return: current offset in bytes of the iterator from the beginning of buffer
- */
-lit_utf8_size_t
-lit_utf8_iterator_get_offset (const lit_utf8_iterator_t *iter_p) /**< iterator */
-{
-  return iter_p->buf_offset;
-} /* lit_utf8_iterator_get_offset */
 
 /**
  * Get pointer to the current utf-8 char which iterator points to
@@ -374,27 +516,8 @@ lit_utf8_iterator_get_offset (const lit_utf8_iterator_t *iter_p) /**< iterator *
 lit_utf8_byte_t *
 lit_utf8_iterator_get_ptr (const lit_utf8_iterator_t *iter_p) /**< iterator */
 {
-  return (lit_utf8_byte_t *) iter_p->buf_p + iter_p->buf_offset;
+  return (lit_utf8_byte_t *) iter_p->buf_p + iter_p->buf_pos.offset;
 } /* lit_utf8_iterator_get_ptr */
-
-/**
- * Checks iterator reached end of the string
- *
- * @return true - the whole string was iterated
- *         false - otherwise
- */
-bool
-lit_utf8_iterator_is_eos (const lit_utf8_iterator_t *buf_iter_p) /**< utf-8 string iterator */
-{
-  JERRY_ASSERT (buf_iter_p->buf_offset <= buf_iter_p->buf_size);
-
-  if (buf_iter_p->buf_offset == buf_iter_p->buf_size)
-  {
-    return true;
-  }
-
-  return false;
-} /* lit_utf8_iterator_is_eos */
 
 /**
  * Calculate size of a zero-terminated utf-8 string

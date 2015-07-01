@@ -496,7 +496,7 @@ convert_string_to_token_transform_escape_seq (token_type tok_type, /**< type of 
       {
         const uint32_t hex_chars_num = (escape_character == 'u' ? 4u : 2u);
 
-        if (source_str_iter.buf_offset + hex_chars_num > source_str_size)
+        if (lit_utf8_iterator_get_offset (&source_str_iter) + hex_chars_num > source_str_size)
         {
           is_correct_sequence = false;
           break;
@@ -527,7 +527,7 @@ convert_string_to_token_transform_escape_seq (token_type tok_type, /**< type of 
         }
 
         JERRY_ASSERT (str_buf_iter_p <= str_buf_p + source_str_size);
-        JERRY_ASSERT (source_str_iter.buf_offset <= source_str_size);
+        JERRY_ASSERT (lit_utf8_iterator_get_offset (&source_str_iter) <= source_str_size);
 
         if (!chars_are_hex)
         {
