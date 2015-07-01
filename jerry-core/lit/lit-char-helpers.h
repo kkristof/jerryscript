@@ -174,14 +174,18 @@ extern bool lit_char_is_unicode_connector_punctuation (ecma_char_t);
  */
 #define LIT_CHAR_ASCII_UPPERCASE_LETTERS_BEGIN      LIT_CHAR_UPPERCASE_A /* uppercase letters range */
 #define LIT_CHAR_ASCII_UPPERCASE_LETTERS_END        LIT_CHAR_UPPERCASE_Z
+
 #define LIT_CHAR_ASCII_LOWERCASE_LETTERS_BEGIN      LIT_CHAR_LOWERCASE_A /* lowercase letters range */
 #define LIT_CHAR_ASCII_LOWERCASE_LETTERS_END        LIT_CHAR_LOWERCASE_Z
+
 #define LIT_CHAR_ASCII_UPPERCASE_LETTERS_HEX_BEGIN  LIT_CHAR_UPPERCASE_A /* uppercase letters for
                                                                           * hexadecimal digits range */
 #define LIT_CHAR_ASCII_UPPERCASE_LETTERS_HEX_END    LIT_CHAR_UPPERCASE_F
+
 #define LIT_CHAR_ASCII_LOWERCASE_LETTERS_HEX_BEGIN  LIT_CHAR_LOWERCASE_A /* lowercase letters for
                                                                           * hexadecimal digits range */
 #define LIT_CHAR_ASCII_LOWERCASE_LETTERS_HEX_END    LIT_CHAR_LOWERCASE_F
+
 #define LIT_CHAR_ASCII_DIGITS_BEGIN                 LIT_CHAR_0           /* decimal digits range */
 #define LIT_CHAR_ASCII_DIGITS_END                   LIT_CHAR_9
 
