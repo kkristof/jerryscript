@@ -16,42 +16,6 @@
 #include "lit-char-helpers.h"
 
 /**
- * Check if specified character is the zero width non-joiner character
- *
- * @return true - if the character is "<ZWNJ>" character according to ECMA-262 v5, Table 1,
- *         false - otherwise.
- */
-bool
-lit_char_is_zero_width_non_joiner (ecma_char_t c) /**< code unit */
-{
-  return (c == 0x200C);
-} /* lit_char_is_zero_width_non_joiner */
-
-/**
- * Check if specified character is the zero width joiner character
- *
- * @return true - if the character is "<ZWJ>" character according to ECMA-262 v5, Table 1,
- *         false - otherwise.
- */
-bool
-lit_char_is_zero_width_joiner (ecma_char_t c) /**< code unit */
-{
-  return (c == 0x200D);
-} /* lit_char_is_zero_width_joiner */
-
-/**
- * Check if specified character is the Byte Order Mark character
- *
- * @return true - if the character is "<BOM>" character according to ECMA-262 v5, Table 1,
- *         false - otherwise.
- */
-bool
-lit_char_is_byte_order_mark (ecma_char_t c) /**< code unit */
-{
-  return (c == 0xFEFF);
-} /* lit_char_is_byte_order_mark */
-
-/**
  * Check if specified character is one of the Format-Control characters
  *
  * @return true - if the character one of characters, listed in ECMA-262 v5, Table 1,
@@ -60,70 +24,10 @@ lit_char_is_byte_order_mark (ecma_char_t c) /**< code unit */
 bool
 lit_char_is_format_control (ecma_char_t c) /**< code unit */
 {
-  return (lit_char_is_zero_width_non_joiner (c)
-          || lit_char_is_zero_width_joiner (c)
-          || lit_char_is_byte_order_mark (c));
+  return (c == LIT_CHAR_ZWNJ
+          || c == LIT_CHAR_ZWJ
+          || c == LIT_CHAR_BOM);
 } /* lit_char_is_format_control */
-
-/**
- * Check if specified character is the Tab character
- *
- * @return true - if the character is "<TAB>" character according to ECMA-262 v5, Table 2,
- *         false - otherwise.
- */
-bool
-lit_char_is_tab (ecma_char_t c) /**< code unit */
-{
-  return (c == 0x0009);
-} /* lit_char_is_tab */
-
-/**
- * Check if specified character is the Vertical Tab character
- *
- * @return true - if the character is "<VTAB>" character according to ECMA-262 v5, Table 2,
- *         false - otherwise.
- */
-bool
-lit_char_is_vertical_tab (ecma_char_t c) /**< code unit */
-{
-  return (c == 0x000B);
-} /* lit_is_vertical_tab */
-
-/**
- * Check if specified character is the Form Feed character
- *
- * @return true - if the character is "<FF>" character according to ECMA-262 v5, Table 2,
- *         false - otherwise.
- */
-bool
-lit_char_is_form_feed (ecma_char_t c) /**< code unit */
-{
-  return (c == 0x000C);
-} /* lit_char_is_form_feed */
-
-/**
- * Check if specified character is the Space character
- *
- * @return true - if the character is "<SP>" character according to ECMA-262 v5, Table 2,
- *         false - otherwise.
- */
-bool
-lit_char_is_space (ecma_char_t c) /**< code unit */
-{
-  return (c == 0x0020);
-} /* lit_char_is_space */
-
-/**
- * Check if specified character is the No-break space character
- *
- * @return true - if the character is "<NBSP>" character according to ECMA-262 v5, Table 2,
- *         false - otherwise.
- */
-bool
-lit_char_is_no_break_space (ecma_char_t c) /**< code unit */
-{
-  return (c == 0x00A0);
-} /* lit_char_is_no_break_space */
 
 /**
  * Check if specified character is the Space Separator character
@@ -157,62 +61,14 @@ lit_char_is_space_separator (ecma_char_t c) /**< code unit */
 bool
 lit_char_is_white_space (ecma_char_t c) /**< code unit */
 {
-  return (lit_char_is_tab (c)
-          || lit_char_is_vertical_tab (c)
-          || lit_char_is_form_feed (c)
-          || lit_char_is_space (c)
-          || lit_char_is_no_break_space (c)
-          || lit_char_is_byte_order_mark (c)
+  return (c == LIT_CHAR_TAB
+          || c == LIT_CHAR_VTAB
+          || c == LIT_CHAR_FF
+          || c == LIT_CHAR_SP
+          || c == LIT_CHAR_NBSP
+          || c == LIT_CHAR_BOM
           || lit_char_is_space_separator (c));
 } /* lit_char_is_white_space */
-
-/**
- * Check if specified character is the newline character
- *
- * @return true - if the character is "<LF>" character according to ECMA-262 v5, Table 3,
- *         false - otherwise.
- */
-bool
-lit_char_is_new_line (ecma_char_t c) /**< code unit */
-{
-  return (c == 0x0A);
-} /* lit_char_is_new_line */
-
-/**
- * Check if specified character the carriage return character
- *
- * @return true - if the character is "<CR>" character according to ECMA-262 v5, Table 3,
- *         false - otherwise.
- */
-bool
-lit_char_is_carriage_return (ecma_char_t c) /**< code unit */
-{
-  return (c == 0x0D);
-} /* lit_char_is_carriage_return */
-
-/**
- * Check if specified character the line separator character
- *
- * @return true - if the character is "<LS>" character according to ECMA-262 v5, Table 3,
- *         false - otherwise.
- */
-bool
-lit_char_is_line_separator (ecma_char_t c) /**< code unit */
-{
-  return (c == 0x2028);
-} /* lit_char_is_line_separator */
-
-/**
- * Check if specified character the paragraph separator character
- *
- * @return true - if the character is "<PS>" character according to ECMA-262 v5, Table 3,
- *         false - otherwise.
- */
-bool
-lit_char_is_paragraph_separator (ecma_char_t c) /**< code unit */
-{
-  return (c == 0x2029);
-} /* lit_char_is_paragraph_separator */
 
 /**
  * Check if specified character is one of LineTerminator (ECMA-262 v5, Table 3) characters
@@ -223,44 +79,11 @@ lit_char_is_paragraph_separator (ecma_char_t c) /**< code unit */
 bool
 lit_char_is_line_terminator (ecma_char_t c) /**< code unit */
 {
-  return (lit_char_is_carriage_return (c)
-          || lit_char_is_new_line (c)
-          || lit_char_is_line_separator (c)
-          || lit_char_is_paragraph_separator (c));
+  return (c == LIT_CHAR_LF
+          || c == LIT_CHAR_CR
+          || c == LIT_CHAR_LS
+          || c == LIT_CHAR_PS);
 } /* lit_char_is_line_terminator */
-
-/**
- * Check if specified character is the dollar sign character ('$')
- *
- * @return true / false
- */
-bool
-lit_char_is_dollar_sign (ecma_char_t c) /**< code unit */
-{
-  return (c == '$');
-} /* lit_char_is_dollar_sign */
-
-/**
- * Check if specified character is the 'low line' character ('_')
- *
- * @return true / false
- */
-bool
-lit_char_is_low_line (ecma_char_t c) /**< code unit */
-{
-  return (c == '_');
-} /* lit_char_is_low_line */
-
-/**
- * Check if specified character is the 'backslash' character ('\')
- *
- * @return true / false
- */
-bool
-lit_char_is_backslash (ecma_char_t c) /**< code unit */
-{
-  return (c == '\\');
-} /* lit_char_is_backslash */
 
 /**
  * Check if specified character is a unicode letter
@@ -296,7 +119,6 @@ lit_char_is_unicode_letter (ecma_char_t c) /**< code unit */
   { \
     return true; \
   }
-#include "lit-unicode-ranges.inc.h"
 
   /* Ll */
 #define LIT_UNICODE_RANGE_LL(range_begin, range_end) \
@@ -304,7 +126,6 @@ lit_char_is_unicode_letter (ecma_char_t c) /**< code unit */
   { \
     return true; \
   }
-#include "lit-unicode-ranges.inc.h"
 
   /* Lt */
 #define LIT_UNICODE_RANGE_LT(range_begin, range_end) \
@@ -312,7 +133,6 @@ lit_char_is_unicode_letter (ecma_char_t c) /**< code unit */
   { \
     return true; \
   }
-#include "lit-unicode-ranges.inc.h"
 
   /* Lm */
 #define LIT_UNICODE_RANGE_LM(range_begin, range_end) \
@@ -320,7 +140,6 @@ lit_char_is_unicode_letter (ecma_char_t c) /**< code unit */
   { \
     return true; \
   }
-#include "lit-unicode-ranges.inc.h"
 
   /* Lo */
 #define LIT_UNICODE_RANGE_LO(range_begin, range_end) \
@@ -328,7 +147,6 @@ lit_char_is_unicode_letter (ecma_char_t c) /**< code unit */
   { \
     return true; \
   }
-#include "lit-unicode-ranges.inc.h"
 
   /* Nl */
 #define LIT_UNICODE_RANGE_NL(range_begin, range_end) \
@@ -336,6 +154,7 @@ lit_char_is_unicode_letter (ecma_char_t c) /**< code unit */
   { \
     return true; \
   }
+
 #include "lit-unicode-ranges.inc.h"
 
   return false;
@@ -364,7 +183,6 @@ lit_char_is_unicode_combining_mark (ecma_char_t c) /**< code unit */
   { \
     return true; \
   }
-#include "lit-unicode-ranges.inc.h"
 
   /* Mc */
 #define LIT_UNICODE_RANGE_MC(range_begin, range_end) \
@@ -372,6 +190,7 @@ lit_char_is_unicode_combining_mark (ecma_char_t c) /**< code unit */
   { \
     return true; \
   }
+
 #include "lit-unicode-ranges.inc.h"
 
   return false;
@@ -399,6 +218,7 @@ lit_char_is_unicode_digit (ecma_char_t c) /**< code unit */
   { \
     return true; \
   }
+
 #include "lit-unicode-ranges.inc.h"
 
   return false;
@@ -426,6 +246,7 @@ lit_char_is_unicode_connector_punctuation (ecma_char_t c) /**< code unit */
   { \
     return true; \
   }
+
 #include "lit-unicode-ranges.inc.h"
 
   return false;
