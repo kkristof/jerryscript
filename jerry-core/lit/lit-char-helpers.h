@@ -35,6 +35,7 @@ extern bool lit_char_is_format_control (ecma_char_t);
 #define LIT_CHAR_FF   ((ecma_char_t) 0x000C) /* form feed */
 #define LIT_CHAR_SP   ((ecma_char_t) 0x0020) /* space */
 #define LIT_CHAR_NBSP ((ecma_char_t) 0x00A0) /* no-break space */
+// #define LIT_CHAR_BOM  ((ecma_char_t) 0xFEFF) /* byte order mark */
 
 extern bool lit_char_is_space_separator (ecma_char_t);
 extern bool lit_char_is_white_space (ecma_char_t);
@@ -50,6 +51,12 @@ extern bool lit_char_is_white_space (ecma_char_t);
 extern bool lit_char_is_line_terminator (ecma_char_t);
 
 /*
+ * Comment characters (ECMA-262 v5, 7.4)
+ */
+#define LIT_CHAR_SLASH    ((ecma_char_t) '/') /* solidus */
+#define LIT_CHAR_ASTERISK ((ecma_char_t) '*') /* asterisk */
+
+/*
  * Identifier name characters (ECMA-262 v5, 7.6)
  */
 #define LIT_CHAR_DOLLAR_SIGN ((ecma_char_t) '$')  /* dollar sign */
@@ -60,6 +67,33 @@ extern bool lit_char_is_unicode_letter (ecma_char_t);
 extern bool lit_char_is_unicode_combining_mark (ecma_char_t);
 extern bool lit_char_is_unicode_digit (ecma_char_t);
 extern bool lit_char_is_unicode_connector_punctuation (ecma_char_t);
+
+/*
+ * Punctuator characters (ECMA-262 v5, 7.7)
+ */
+#define LIT_CHAR_LEFT_BRACE   ((ecma_char_t) '{') /* left curly bracket */
+#define LIT_CHAR_RIGHT_BRACE  ((ecma_char_t) '}') /* right curly bracket */
+#define LIT_CHAR_LEFT_PAREN   ((ecma_char_t) '(') /* left parenthesis */
+#define LIT_CHAR_RIGHT_PAREN  ((ecma_char_t) ')') /* right parenthesis */
+#define LIT_CHAR_LEFT_SQUARE  ((ecma_char_t) '[') /* left square bracket */
+#define LIT_CHAR_RIGHT_SQUARE ((ecma_char_t) ']') /* right square bracket */
+#define LIT_CHAR_DOT          ((ecma_char_t) '.') /* dot */
+#define LIT_CHAR_SEMICOLON    ((ecma_char_t) ';') /* semicolon */
+#define LIT_CHAR_COMMA        ((ecma_char_t) ',') /* comma */
+#define LIT_CHAR_LESS_THAN    ((ecma_char_t) '<') /* less-than sign */
+#define LIT_CHAR_GREATER_THAN ((ecma_char_t) '>') /* greater-than sign */
+#define LIT_CHAR_EQUAL        ((ecma_char_t) '=') /* equals sign */
+#define LIT_CHAR_PLUS         ((ecma_char_t) '+') /* plus sign */
+#define LIT_CHAR_MINUS        ((ecma_char_t) '-') /* hyphen-minus */
+// #define LIT_CHAR_ASTERISK     ((ecma_char_t) '*') /* asterisk */
+#define LIT_CHAR_PERCENT      ((ecma_char_t) '%') /* percent sign */
+#define LIT_CHAR_AMPERSAND    ((ecma_char_t) '&') /* ampersand */
+#define LIT_CHAR_VLINE        ((ecma_char_t) '|') /* vertical line */
+#define LIT_CHAR_CIRCUMFLEX   ((ecma_char_t) '^') /* circumflex accent */
+#define LIT_CHAR_EXCLAMATION  ((ecma_char_t) '!') /* exclamation mark */
+#define LIT_CHAR_TILDE        ((ecma_char_t) '~') /* tilde */
+#define LIT_CHAR_QUESTION     ((ecma_char_t) '?') /* question mark */
+#define LIT_CHAR_COLON        ((ecma_char_t) ':') /* colon */
 
 /*
  * Part of IsWordChar abstract operation (ECMA-262 v5, 15.10.2.6, step 3)
