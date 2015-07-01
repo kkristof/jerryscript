@@ -52,9 +52,9 @@ lit_char_is_byte_order_mark (ecma_char_t c) /**< code unit */
 } /* lit_char_is_byte_order_mark */
 
 /**
- * Check if specified character is one of the format control characters
+ * Check if specified character is one of the Format-Control characters
  *
- * @return true - if the character is "" character according to ECMA-262 v5, Table 1,
+ * @return true - if the character one of characters, listed in ECMA-262 v5, Table 1,
  *         false - otherwise.
  */
 bool
@@ -64,6 +64,107 @@ lit_char_is_format_control (ecma_char_t c) /**< code unit */
           || lit_char_is_zero_width_joiner (c)
           || lit_char_is_byte_order_mark (c));
 } /* lit_char_is_format_control */
+
+/**
+ * Check if specified character is the Tab character
+ *
+ * @return true - if the character is "<TAB>" character according to ECMA-262 v5, Table 2,
+ *         false - otherwise.
+ */
+bool
+lit_char_is_tab (ecma_char_t c) /**< code unit */
+{
+  return (c == 0x0009);
+} /* lit_char_is_tab */
+
+/**
+ * Check if specified character is the Vertical Tab character
+ *
+ * @return true - if the character is "<VTAB>" character according to ECMA-262 v5, Table 2,
+ *         false - otherwise.
+ */
+bool
+lit_char_is_vertical_tab (ecma_char_t c) /**< code unit */
+{
+  return (c == 0x000B);
+} /* lit_is_vertical_tab */
+
+/**
+ * Check if specified character is the Form Feed character
+ *
+ * @return true - if the character is "<FF>" character according to ECMA-262 v5, Table 2,
+ *         false - otherwise.
+ */
+bool
+lit_char_is_form_feed (ecma_char_t c) /**< code unit */
+{
+  return (c == 0x000C);
+} /* lit_char_is_form_feed */
+
+/**
+ * Check if specified character is the Space character
+ *
+ * @return true - if the character is "<SP>" character according to ECMA-262 v5, Table 2,
+ *         false - otherwise.
+ */
+bool
+lit_char_is_space (ecma_char_t c) /**< code unit */
+{
+  return (c == 0x0020);
+} /* lit_char_is_space */
+
+/**
+ * Check if specified character is the No-break space character
+ *
+ * @return true - if the character is "<NBSP>" character according to ECMA-262 v5, Table 2,
+ *         false - otherwise.
+ */
+bool
+lit_char_is_no_break_space (ecma_char_t c) /**< code unit */
+{
+  return (c == 0x00A0);
+} /* lit_char_is_no_break_space */
+
+/**
+ * Check if specified character is the Space Separator character
+ *
+ * See also:
+ *          ECMA-262 v5, Table 2
+ *
+ * @return true - if the character falls into "Space, Separator" ("Zs") character category,
+ *         false - otherwise.
+ */
+bool
+lit_char_is_space_separator (ecma_char_t c) /**< code unit */
+{
+  /* Zs */
+#define LIT_UNICODE_RANGE_ZS(range_begin, range_end) \
+  if (c >= (range_begin) && c <= (range_end)) \
+  { \
+    return true; \
+  }
+#include "lit-unicode-ranges.inc.h"
+
+  return false;
+} /* lit_char_is_space_separator */
+
+/**
+ * Check if specified character is one of the Whitespace characters
+ *
+ * @return true - if the character one of characters, listed in ECMA-262 v5, Table 2,
+ *         false - otherwise.
+ */
+bool
+lit_char_is_white_space (ecma_char_t c) /**< code unit */
+{
+  return (lit_char_is_tab (c)
+          || lit_char_is_vertical_tab (c)
+          || lit_char_is_form_feed (c)
+          || lit_char_is_space (c)
+          || lit_char_is_no_break_space (c)
+          || lit_char_is_byte_order_mark (c)
+          || lit_char_is_space_separator (c));
+} /* lit_char_is_white_space */
 
 /**
  * Check if specified character is the newline character
