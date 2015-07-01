@@ -52,9 +52,9 @@ extern bool lit_char_is_line_terminator (ecma_char_t);
 /*
  * Identifier name characters (ECMA-262 v5, 7.6)
  */
-#define LIT_CHAR_DOLLAR_SIGN ((ecma_char_t) '$')
-#define LIT_CHAR_UNDERSCORE  ((ecma_char_t) '_')
-#define LIT_CHAR_BACKSLASH   ((ecma_char_t) '\\')
+#define LIT_CHAR_DOLLAR_SIGN ((ecma_char_t) '$')  /* dollar sign */
+#define LIT_CHAR_UNDERSCORE  ((ecma_char_t) '_')  /* low line (underscore) */
+#define LIT_CHAR_BACKSLASH   ((ecma_char_t) '\\') /* reverse solidus (backslash) */
 
 extern bool lit_char_is_unicode_letter (ecma_char_t);
 extern bool lit_char_is_unicode_combining_mark (ecma_char_t);
