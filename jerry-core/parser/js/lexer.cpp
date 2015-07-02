@@ -640,56 +640,28 @@ parse_name (void)
 
   token known_token = empty_token;
 
-  JERRY_ASSERT (isalpha (c)
+  JERRY_ASSERT (lit_char_is_unicode_letter (c)
                 || c == LIT_CHAR_DOLLAR_SIGN
                 || c == LIT_CHAR_UNDERSCORE
                 || c == LIT_CHAR_BACKSLASH);
 
   new_token ();
 
-  while (true)
+  while (lit_char_is_unicode_letter (c)
+         || c == LIT_CHAR_DOLLAR_SIGN
+         || c == LIT_CHAR_UNDERSCORE
+         || c == LIT_CHAR_BACKSLASH
+         || lit_char_is_unicode_combining_mark (c)
+         || lit_char_is_unicode_digit (c)
+         || lit_char_is_unicode_connector_punctuation (c))
   {
+    /*
+     * Correctness of UnicodeEscapeSequence, if there is any,
+     * is checked in convert_string_to_token_transform_escape_seq
+     */
+    consume_char ();
+
     c = (ecma_char_t) LA (0);
-
-    if (!isalpha (c)
-        && !isdigit (c)
-        && c != LIT_CHAR_DOLLAR_SIGN
-        && c != LIT_CHAR_UNDERSCORE
-        && c != LIT_CHAR_BACKSLASH)
-    {
-      break;
-    }
-    else
-    {
-      consume_char ();
-
-      if (c == LIT_CHAR_BACKSLASH)
-      {
-        bool is_correct_sequence = (LA (0) == LIT_CHAR_LOWERCASE_U);
-        if (is_correct_sequence)
-        {
-          consume_char ();
-        }
-
-        for (uint32_t i = 0;
-             is_correct_sequence && i < 4;
-             i++)
-        {
-          if (!isxdigit (LA (0)))
-          {
-            is_correct_sequence = false;
-            break;
-          }
-
-          consume_char ();
-        }
-
-        if (!is_correct_sequence)
-        {
-          PARSE_ERROR ("Malformed escape sequence", token_start - buffer_start);
-        }
-      }
-    }
   }
 
   const lit_utf8_size_t seq_size = (lit_utf8_size_t) (lit_utf8_iterator_get_ptr (&src_iter) - token_start);
@@ -941,7 +913,7 @@ parse_string (void)
   JERRY_ASSERT (c == LIT_CHAR_SINGLE_QUOTE
                 || c == LIT_CHAR_DOUBLE_QUOTE);
 
-  /* Consume quote character */ 
+  /* Consume quote character */
   consume_char ();
   new_token ();
 
@@ -1068,19 +1040,6 @@ parse_regexp (void)
   return result;
 } /* parse_regexp */
 
-static void
-grobble_whitespaces (void)
-{
-  ecma_char_t c = LA (0);
-
-  while (isspace (c)
-         && c != LIT_CHAR_LF)
-  {
-    consume_char ();
-    c = LA (0);
-  }
-}
-
 static bool
 replace_comment_by_newline (void)
 {
@@ -1134,9 +1093,20 @@ lexer_next_token_private (void)
 {
   ecma_char_t c = LA (0);
 
+  if (lit_char_is_white_space (c))
+  {
+    while (lit_char_is_white_space (c))
+    {
+      consume_char ();
+
+      c = LA (0);
+    }
+  }
+
   JERRY_ASSERT (token_start == NULL);
 
-  if (isalpha (c)
+  /* ECMA-262 v5, 7.6, Identifier */
+  if (lit_char_is_unicode_letter (c)
       || c == LIT_CHAR_DOLLAR_SIGN
       || c == LIT_CHAR_UNDERSCORE
       || c == LIT_CHAR_BACKSLASH)
@@ -1144,6 +1114,7 @@ lexer_next_token_private (void)
     return parse_name ();
   }
 
+  /* ECMA-262 v5, 7.8.3, Numeric literal */
   if (isdigit (c)
       || (c == LIT_CHAR_DOT && isdigit (LA (1))))
   {
@@ -1167,12 +1138,7 @@ lexer_next_token_private (void)
     return parse_string ();
   }
 
-  if (isspace (c))
-  {
-    grobble_whitespaces ();
-    return lexer_next_token_private ();
-  }
-
+  /* ECMA-262 v5, 7.4, MultiLineComment */
   if (c == LIT_CHAR_SLASH && LA (1) == LIT_CHAR_ASTERISK)
   {
     if (replace_comment_by_newline ())
@@ -1190,9 +1156,9 @@ lexer_next_token_private (void)
     }
   }
 
-
   if (c == LIT_CHAR_SLASH)
   {
+    /* ECMA-262 v5, 7.4, SingleLineComment */
     if (LA (1) == LIT_CHAR_SLASH)
     {
       replace_comment_by_newline ();
@@ -1213,31 +1179,110 @@ lexer_next_token_private (void)
     }
   }
 
+  /* ECMA-262 v5, 7.7, Punctuator */
   switch (c)
   {
-    case LIT_CHAR_LEFT_BRACE: RETURN_PUNC (TOK_OPEN_BRACE); break;
-    case LIT_CHAR_RIGHT_BRACE: RETURN_PUNC (TOK_CLOSE_BRACE); break;
-    case LIT_CHAR_LEFT_PAREN: RETURN_PUNC (TOK_OPEN_PAREN); break;
-    case LIT_CHAR_RIGHT_PAREN: RETURN_PUNC (TOK_CLOSE_PAREN); break;
-    case LIT_CHAR_LEFT_SQUARE: RETURN_PUNC (TOK_OPEN_SQUARE); break;
-    case LIT_CHAR_RIGHT_SQUARE: RETURN_PUNC (TOK_CLOSE_SQUARE); break;
-    case LIT_CHAR_DOT: RETURN_PUNC (TOK_DOT); break;
-    case LIT_CHAR_SEMICOLON: RETURN_PUNC (TOK_SEMICOLON); break;
-    case LIT_CHAR_COMMA: RETURN_PUNC (TOK_COMMA); break;
-    case LIT_CHAR_TILDE: RETURN_PUNC (TOK_COMPL); break;
-    case LIT_CHAR_COLON: RETURN_PUNC (TOK_COLON); break;
-    case LIT_CHAR_QUESTION: RETURN_PUNC (TOK_QUERY); break;
+    case LIT_CHAR_LEFT_BRACE:
+    {
+      RETURN_PUNC (TOK_OPEN_BRACE);
+      break;
+    }
+    case LIT_CHAR_RIGHT_BRACE:
+    {
+      RETURN_PUNC (TOK_CLOSE_BRACE);
+      break;
+    }
+    case LIT_CHAR_LEFT_PAREN:
+    {
+      RETURN_PUNC (TOK_OPEN_PAREN);
+      break;
+    }
+    case LIT_CHAR_RIGHT_PAREN:
+    {
+      RETURN_PUNC (TOK_CLOSE_PAREN);
+      break;
+    }
+    case LIT_CHAR_LEFT_SQUARE:
+    {
+      RETURN_PUNC (TOK_OPEN_SQUARE);
+      break;
+    }
+    case LIT_CHAR_RIGHT_SQUARE:
+    {
+      RETURN_PUNC (TOK_CLOSE_SQUARE);
+      break;
+    }
+    case LIT_CHAR_DOT:
+    {
+      RETURN_PUNC (TOK_DOT);
+      break;
+    }
+    case LIT_CHAR_SEMICOLON:
+    {
+      RETURN_PUNC (TOK_SEMICOLON);
+      break;
+    }
+    case LIT_CHAR_COMMA:
+    {
+      RETURN_PUNC (TOK_COMMA);
+      break;
+    }
+    case LIT_CHAR_TILDE:
+    {
+      RETURN_PUNC (TOK_COMPL);
+      break;
+    }
+    case LIT_CHAR_COLON:
+    {
+      RETURN_PUNC (TOK_COLON);
+      break;
+    }
+    case LIT_CHAR_QUESTION:
+    {
+      RETURN_PUNC (TOK_QUERY);
+      break;
+    }
 
-    case LIT_CHAR_ASTERISK: IF_LA_IS (LIT_CHAR_EQUALS, TOK_MULT_EQ, TOK_MULT); break;
-    case LIT_CHAR_SLASH: IF_LA_IS (LIT_CHAR_EQUALS, TOK_DIV_EQ, TOK_DIV); break;
-    case LIT_CHAR_CIRCUMFLEX: IF_LA_IS (LIT_CHAR_EQUALS, TOK_XOR_EQ, TOK_XOR); break;
-    case LIT_CHAR_PERCENT: IF_LA_IS (LIT_CHAR_EQUALS, TOK_MOD_EQ, TOK_MOD); break;
-
-    case LIT_CHAR_PLUS: IF_LA_IS_OR (LIT_CHAR_PLUS, TOK_DOUBLE_PLUS, LIT_CHAR_EQUALS, TOK_PLUS_EQ, TOK_PLUS); break;
-    case LIT_CHAR_MINUS: IF_LA_IS_OR (LIT_CHAR_MINUS, TOK_DOUBLE_MINUS, LIT_CHAR_EQUALS, TOK_MINUS_EQ, TOK_MINUS); break;
-    case LIT_CHAR_AMPERSAND: IF_LA_IS_OR (LIT_CHAR_AMPERSAND, TOK_DOUBLE_AND, LIT_CHAR_EQUALS, TOK_AND_EQ, TOK_AND); break;
-    case LIT_CHAR_VLINE: IF_LA_IS_OR (LIT_CHAR_VLINE, TOK_DOUBLE_OR, LIT_CHAR_EQUALS, TOK_OR_EQ, TOK_OR); break;
-
+    case LIT_CHAR_ASTERISK:
+    {
+      IF_LA_IS (LIT_CHAR_EQUALS, TOK_MULT_EQ, TOK_MULT);
+      break;
+    }
+    case LIT_CHAR_SLASH:
+    {
+      IF_LA_IS (LIT_CHAR_EQUALS, TOK_DIV_EQ, TOK_DIV);
+      break;
+    }
+    case LIT_CHAR_CIRCUMFLEX:
+    {
+      IF_LA_IS (LIT_CHAR_EQUALS, TOK_XOR_EQ, TOK_XOR);
+      break;
+    }
+    case LIT_CHAR_PERCENT:
+    {
+      IF_LA_IS (LIT_CHAR_EQUALS, TOK_MOD_EQ, TOK_MOD);
+      break;
+    }
+    case LIT_CHAR_PLUS:
+    {
+      IF_LA_IS_OR (LIT_CHAR_PLUS, TOK_DOUBLE_PLUS, LIT_CHAR_EQUALS, TOK_PLUS_EQ, TOK_PLUS);
+      break;
+    }
+    case LIT_CHAR_MINUS:
+    {
+      IF_LA_IS_OR (LIT_CHAR_MINUS, TOK_DOUBLE_MINUS, LIT_CHAR_EQUALS, TOK_MINUS_EQ, TOK_MINUS);
+      break;
+    }
+    case LIT_CHAR_AMPERSAND:
+    {
+      IF_LA_IS_OR (LIT_CHAR_AMPERSAND, TOK_DOUBLE_AND, LIT_CHAR_EQUALS, TOK_AND_EQ, TOK_AND);
+      break;
+    }
+    case LIT_CHAR_VLINE:
+    {
+      IF_LA_IS_OR (LIT_CHAR_VLINE, TOK_DOUBLE_OR, LIT_CHAR_EQUALS, TOK_OR_EQ, TOK_OR);
+      break;
+    }
     case LIT_CHAR_LESS_THAN:
     {
       switch (LA (1))
@@ -1291,8 +1336,8 @@ lexer_next_token_private (void)
       }
       break;
     }
-    default: PARSE_SORRY ("Unknown character", lit_utf8_iterator_get_offset (&src_iter));
   }
+
   PARSE_SORRY ("Unknown character", lit_utf8_iterator_get_offset (&src_iter));
 }
 
