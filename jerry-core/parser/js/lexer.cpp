@@ -656,6 +656,8 @@ lexer_parse_identifier_or_keyword (void)
 
   while (lexer_is_char_can_be_identifier_part (c))
   {
+    consume_char ();
+
     if (!(c >= LIT_CHAR_ASCII_LOWERCASE_LETTERS_BEGIN
           && c <= LIT_CHAR_ASCII_LOWERCASE_LETTERS_END))
     {
@@ -666,7 +668,6 @@ lexer_parse_identifier_or_keyword (void)
     {
       is_escape_sequence_occured = true;
 
-      consume_char ();
       c = LA (0);
 
       if (c == LIT_CHAR_LOWERCASE_U)
@@ -680,13 +681,18 @@ lexer_parse_identifier_or_keyword (void)
           is_correct_identifier_name = false;
           break;
         }
-        else if (!lexer_is_char_can_be_identifier_part (c))
+        else
         {
-          is_correct_identifier_name = false;
-          break;
-        }
+          // Check character, converted from UnicodeEscapeSequence
+          if (!lexer_is_char_can_be_identifier_part (c))
+          {
+            is_correct_identifier_name = false;
+            break;
+          }
 
-        c = LA (0);
+          // Read character just after UnicodeEscapeSequence
+          c = LA (0);
+        }
       }
       else
       {
@@ -694,9 +700,10 @@ lexer_parse_identifier_or_keyword (void)
         break;
       }
     }
-
-    consume_char ();
-    c = LA (0);
+    else
+    {
+      c = LA (0);
+    }
   }
 
   if (!is_correct_identifier_name)
@@ -940,7 +947,7 @@ lexer_parse_number (void)
 static token
 lexer_parse_string (void)
 {
-  ecma_char_t c = LA (0);
+  ecma_char_t c = (ecma_char_t) LA (0);
   JERRY_ASSERT (c == LIT_CHAR_SINGLE_QUOTE
                 || c == LIT_CHAR_DOUBLE_QUOTE);
 
@@ -969,14 +976,14 @@ lexer_parse_string (void)
     {
       is_escape_sequence_occured = true;
 
-      ecma_char_t nc = LA (0);
+      ecma_char_t nc = (ecma_char_t) LA (0);
       consume_char ();
 
       if (lit_char_is_line_terminator (nc))
       {
         if (nc == LIT_CHAR_CR)
         {
-          nc = LA (0);
+          nc = (ecma_char_t) LA (0);
 
           if (nc == LIT_CHAR_LF)
           {
@@ -1034,7 +1041,7 @@ lexer_parse_regexp (void)
 
   while (true)
   {
-    ecma_char_t c = LA (0);
+    ecma_char_t c = (ecma_char_t) LA (0);
 
     if (c == LIT_CHAR_NULL)
     {
@@ -1069,7 +1076,7 @@ lexer_parse_regexp (void)
   /* Try to parse RegExp flags */
   while (true)
   {
-    ecma_char_t c = LA (0);
+    ecma_char_t c = (ecma_char_t) LA (0);
 
     if (c == LIT_CHAR_NULL
         || !lit_char_is_word_char (c)
