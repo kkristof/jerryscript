@@ -754,13 +754,12 @@ lexer_parse_number (void)
   bool is_hex = false;
   bool is_fp = false;
   bool is_exp = false;
-  bool is_overflow = false;
   ecma_number_t fp_res = .0;
   size_t tok_length = 0, i;
-  uint32_t res = 0;
   token known_token;
 
-  JERRY_ASSERT (isdigit (c) || c == LIT_CHAR_DOT);
+  JERRY_ASSERT (lit_char_is_decimal_digit (c)
+                || c == LIT_CHAR_DOT);
 
   if (c == LIT_CHAR_0)
   {
@@ -770,10 +769,9 @@ lexer_parse_number (void)
       is_hex = true;
     }
   }
-
-  if (c == LIT_CHAR_DOT)
+  else if (c == LIT_CHAR_DOT)
   {
-    JERRY_ASSERT (!isalpha (LA (1)));
+    JERRY_ASSERT (lit_char_is_decimal_digit (LA (1)));
     is_fp = true;
   }
 
@@ -782,193 +780,155 @@ lexer_parse_number (void)
     // Eat up '0x'
     consume_char ();
     consume_char ();
+
     new_token ();
     while (true)
     {
       c = LA (0);
-      if (!isxdigit (c))
+      if (!lit_char_is_hex_digit (c))
       {
         break;
       }
       consume_char ();
     }
 
-    if (isalpha (c) || c == LIT_CHAR_UNDERSCORE || c == LIT_CHAR_DOLLAR_SIGN)
+    if (lexer_is_char_can_be_identifier_start (c))
     {
-      PARSE_ERROR ("Integer literal shall not contain non-digit characters",
+      PARSE_ERROR ("Identifier just after integer literal",
                    lit_utf8_iterator_get_offset (&src_iter));
     }
 
     tok_length = (size_t) (lit_utf8_iterator_get_ptr (&src_iter) - token_start);
 
+    /* token is constructed at end of function */
     for (i = 0; i < tok_length; i++)
     {
-      if (!is_overflow)
+      fp_res = fp_res * 16 + (ecma_number_t) lit_char_hex_to_int (token_start[i]);
+    }
+  }
+  else
+  {
+    new_token ();
+
+    // Eat up '.'
+    if (is_fp)
+    {
+      consume_char ();
+    }
+
+    while (true)
+    {
+      c = LA (0);
+      if (is_fp && c == LIT_CHAR_DOT)
       {
-        res = (res << 4) + lit_char_hex_to_int (token_start[i]);
+        /* token is constructed at end of function */
+        break;
+      }
+      if (is_exp && (c == LIT_CHAR_LOWERCASE_E || c == LIT_CHAR_UPPERCASE_E))
+      {
+        PARSE_ERROR ("Numeric literal shall not contain more than exponential marker ('e' or 'E')",
+                     lit_utf8_iterator_get_offset (&src_iter));
+      }
+
+      if (c == LIT_CHAR_DOT)
+      {
+        is_fp = true;
+        consume_char ();
+
+        if (lexer_is_char_can_be_identifier_start (LA (0)))
+        {
+          PARSE_ERROR ("Numeric literal shall not contain non-numeric character after dot character",
+                       lit_utf8_iterator_get_offset (&src_iter));
+        }
+
+        continue;
+      }
+
+      if (c == LIT_CHAR_LOWERCASE_E
+          || c == LIT_CHAR_UPPERCASE_E)
+      {
+        if (LA (1) == LIT_CHAR_MINUS
+            || LA (1) == LIT_CHAR_PLUS)
+        {
+          consume_char ();
+        }
+
+        if (!lit_char_is_decimal_digit (LA (1)))
+        {
+          PARSE_ERROR ("Numeric literal shall not contain non-numeric character after exponential marker ('e' or 'E')",
+                       lit_utf8_iterator_get_offset (&src_iter));
+        }
+
+        is_exp = true;
+        consume_char ();
+        continue;
+      }
+
+      if (!lit_char_is_decimal_digit (c))
+      {
+        if (lexer_is_char_can_be_identifier_start (c))
+        {
+          PARSE_ERROR ("Numeric literal shall not contain non-numeric characters",
+                       lit_utf8_iterator_get_offset (&src_iter));
+        }
+
+        /* token is constructed at end of function */
+        break;
+      }
+
+      consume_char ();
+    }
+
+    tok_length = (size_t) (lit_utf8_iterator_get_ptr (&src_iter) - token_start);
+
+    if (is_fp || is_exp)
+    {
+      ecma_number_t res = ecma_utf8_string_to_number (token_start, (jerry_api_size_t) tok_length);
+      JERRY_ASSERT (!ecma_number_is_nan (res));
+
+      known_token = convert_seen_num_to_token (res);
+      token_start = NULL;
+
+      return known_token;
+    }
+    else if (*token_start == LIT_CHAR_0
+             && tok_length != 1)
+    {
+      /* Octal integer literals */
+      if (strict_mode)
+      {
+        PARSE_ERROR ("Octal integer literals are not allowed in strict mode", token_start - buffer_start);
       }
       else
       {
-        fp_res = fp_res * 16 + (ecma_number_t) lit_char_hex_to_int (token_start[i]);
-      }
+        /* token is constructed at end of function */
 
-      if (res > 255)
-      {
-        fp_res = (ecma_number_t) res;
-        is_overflow = true;
-        res = 0;
+        for (i = 0; i < tok_length; i++)
+        {
+          fp_res = fp_res * 8 + (ecma_number_t) lit_char_hex_to_int (token_start[i]);
+        }
       }
-    }
-
-    if (is_overflow)
-    {
-      known_token = convert_seen_num_to_token (fp_res);
-      token_start = NULL;
-      return known_token;
     }
     else
     {
-      known_token = create_token (TOK_SMALL_INT, (uint8_t) res);
-      token_start = NULL;
-      return known_token;
-    }
-  }
+      /* token is constructed at end of function */
 
-  JERRY_ASSERT (!is_hex && !is_exp);
-
-  new_token ();
-
-  // Eat up '.'
-  if (is_fp)
-  {
-    consume_char ();
-  }
-
-  while (true)
-  {
-    c = LA (0);
-    if (is_fp && c == LIT_CHAR_DOT)
-    {
-      FIXME (/* This is wrong: 1..toString ().  */)
-      PARSE_ERROR ("Integer literal shall not contain more than one dot character",
-                   lit_utf8_iterator_get_offset (&src_iter));
-    }
-    if (is_exp && (c == LIT_CHAR_LOWERCASE_E || c == LIT_CHAR_UPPERCASE_E))
-    {
-      PARSE_ERROR ("Integer literal shall not contain more than exponential marker ('e' or 'E')",
-                   lit_utf8_iterator_get_offset (&src_iter));
-    }
-
-    if (c == LIT_CHAR_DOT)
-    {
-      if (isalpha (LA (1))
-          || LA (1) == LIT_CHAR_UNDERSCORE
-          || LA (1) == LIT_CHAR_DOLLAR_SIGN)
-      {
-        PARSE_ERROR ("Integer literal shall not contain non-digit character after got character",
-                     lit_utf8_iterator_get_offset (&src_iter));
-      }
-      is_fp = true;
-      consume_char ();
-      continue;
-    }
-
-    if (c == LIT_CHAR_LOWERCASE_E || c == LIT_CHAR_UPPERCASE_E)
-    {
-      if (LA (1) == LIT_CHAR_MINUS
-          || LA (1) == LIT_CHAR_PLUS)
-      {
-        consume_char ();
-      }
-      if (!isdigit (LA (1)))
-      {
-        PARSE_ERROR ("Integer literal shall not contain non-digit character after exponential marker ('e' or 'E')",
-                     lit_utf8_iterator_get_offset (&src_iter));
-      }
-      is_exp = true;
-      consume_char ();
-      continue;
-    }
-
-    if (isalpha (c)
-        || LA (1) == LIT_CHAR_UNDERSCORE
-        || LA (1) == LIT_CHAR_DOLLAR_SIGN)
-    {
-      PARSE_ERROR ("Integer literal shall not contain non-digit characters", lit_utf8_iterator_get_offset (&src_iter));
-    }
-
-    if (!isdigit (c))
-    {
-      break;
-    }
-
-    consume_char ();
-  }
-
-  tok_length = (size_t) (lit_utf8_iterator_get_ptr (&src_iter) - token_start);
-  if (is_fp || is_exp)
-  {
-    ecma_number_t res = ecma_utf8_string_to_number (token_start, (jerry_api_size_t) tok_length);
-    JERRY_ASSERT (!ecma_number_is_nan (res));
-    known_token = convert_seen_num_to_token (res);
-    token_start = NULL;
-    return known_token;
-  }
-
-  if (*token_start == LIT_CHAR_0 && tok_length != 1)
-  {
-    if (strict_mode)
-    {
-      PARSE_ERROR ("Octal tnteger literals are not allowed in strict mode", token_start - buffer_start);
-    }
-    for (i = 0; i < tok_length; i++)
-    {
-      if (!is_overflow)
-      {
-        res = res * 8 + lit_char_hex_to_int (token_start[i]);
-      }
-      else
-      {
-        fp_res = fp_res * 8 + (ecma_number_t) lit_char_hex_to_int (token_start[i]);
-      }
-      if (res > 255)
-      {
-        fp_res = (ecma_number_t) res;
-        is_overflow = true;
-        res = 0;
-      }
-    }
-  }
-  else
-  {
-    for (i = 0; i < tok_length; i++)
-    {
-      if (!is_overflow)
-      {
-        res = res * 10 + lit_char_hex_to_int (token_start[i]);
-      }
-      else
+      for (i = 0; i < tok_length; i++)
       {
         fp_res = fp_res * 10 + (ecma_number_t) lit_char_hex_to_int (token_start[i]);
       }
-      if (res > 255)
-      {
-        fp_res = (ecma_number_t) res;
-        is_overflow = true;
-        res = 0;
-      }
     }
   }
 
-  if (is_overflow)
+  if (fp_res >= 0 && fp_res <= 255 && (uint8_t) fp_res == fp_res)
   {
-    known_token = convert_seen_num_to_token (fp_res);
+    known_token = create_token (TOK_SMALL_INT, (uint8_t) fp_res);
     token_start = NULL;
     return known_token;
   }
   else
   {
-    known_token = create_token (TOK_SMALL_INT, (uint8_t) res);
+    known_token = convert_seen_num_to_token (fp_res);
     token_start = NULL;
     return known_token;
   }
@@ -1208,8 +1168,9 @@ lexer_parse_token (void)
   }
 
   /* ECMA-262 v5, 7.8.3, Numeric literal */
-  if (isdigit (c)
-      || (c == LIT_CHAR_DOT && isdigit (LA (1))))
+  if (lit_char_is_decimal_digit (c)
+      || (c == LIT_CHAR_DOT
+          && lit_char_is_decimal_digit (LA (1))))
   {
     return lexer_parse_number ();
   }
