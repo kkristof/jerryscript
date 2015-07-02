@@ -253,6 +253,24 @@ lit_char_is_unicode_connector_punctuation (ecma_char_t c) /**< code unit */
 } /* lit_char_is_unicode_connector_punctuation */
 
 /**
+ * Check if specified character is one of OctalDigit characters (ECMA-262 v5, B.1.2)
+ *
+ * @return true / false
+ */
+bool
+lit_char_is_octal_digit (ecma_char_t c) /**< code unit */
+{
+  if (c >= LIT_CHAR_ASCII_OCTAL_DIGITS_BEGIN && c <= LIT_CHAR_ASCII_OCTAL_DIGITS_END)
+  {
+    return true;
+  }
+  else
+  {
+    return false;
+  }
+} /* lit_char_is_octal_digit */
+
+/**
  * Check if specified character is one of DecimalDigit characters (ECMA-262 v5, 7.8.3)
  *
  * @return true / false
