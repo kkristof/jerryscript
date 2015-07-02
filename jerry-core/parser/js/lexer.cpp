@@ -579,6 +579,10 @@ lexer_transform_escape_sequences (const jerry_api_char_t *source_str_p, /**< str
             break;
           }
         }
+        else
+        {
+          converted_char = char_after_next;
+        }
       }
       else if (char_after_next == LIT_CHAR_LOWERCASE_U
                || char_after_next == LIT_CHAR_LOWERCASE_X)
