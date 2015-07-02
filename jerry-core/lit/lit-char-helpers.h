@@ -51,6 +51,19 @@ extern bool lit_char_is_white_space (ecma_char_t);
 extern bool lit_char_is_line_terminator (ecma_char_t);
 
 /*
+ * String Single Character Escape Sequences (ECMA-262 v5, Table 4)
+ */
+#define LIT_CHAR_BS           ((ecma_char_t) 0x0008) /* backspace */
+/* LIT_CHAR_TAB is defined above */
+/* LIT_CHAR_LF is defined above */
+/* LIT_CHAR_VTAB is defined above */
+/* LIT_CHAR_FF is defined above */
+/* LIT_CHAR_CR is defined above */
+#define LIT_CHAR_DOUBLE_QUOTE ((ecma_char_t) '"') /* double quote */
+#define LIT_CHAR_SINGLE_QUOTE ((ecma_char_t) '\'') /* single quote */
+#define LIT_CHAR_BACKSLASH    ((ecma_char_t) '\\') /* reverse solidus (backslash) */
+
+/*
  * Comment characters (ECMA-262 v5, 7.4)
  */
 #define LIT_CHAR_SLASH    ((ecma_char_t) '/') /* solidus */
@@ -61,7 +74,7 @@ extern bool lit_char_is_line_terminator (ecma_char_t);
  */
 #define LIT_CHAR_DOLLAR_SIGN ((ecma_char_t) '$')  /* dollar sign */
 #define LIT_CHAR_UNDERSCORE  ((ecma_char_t) '_')  /* low line (underscore) */
-#define LIT_CHAR_BACKSLASH   ((ecma_char_t) '\\') /* reverse solidus (backslash) */
+/* LIT_CHAR_BACKSLASH defined above */
 
 extern bool lit_char_is_unicode_letter (ecma_char_t);
 extern bool lit_char_is_unicode_combining_mark (ecma_char_t);
@@ -82,7 +95,7 @@ extern bool lit_char_is_unicode_connector_punctuation (ecma_char_t);
 #define LIT_CHAR_COMMA        ((ecma_char_t) ',') /* comma */
 #define LIT_CHAR_LESS_THAN    ((ecma_char_t) '<') /* less-than sign */
 #define LIT_CHAR_GREATER_THAN ((ecma_char_t) '>') /* greater-than sign */
-#define LIT_CHAR_EQUAL        ((ecma_char_t) '=') /* equals sign */
+#define LIT_CHAR_EQUALS       ((ecma_char_t) '=') /* equals sign */
 #define LIT_CHAR_PLUS         ((ecma_char_t) '+') /* plus sign */
 #define LIT_CHAR_MINUS        ((ecma_char_t) '-') /* hyphen-minus */
 /* LIT_CHAR_ASTERISK is defined above */
@@ -188,6 +201,11 @@ extern bool lit_char_is_unicode_connector_punctuation (ecma_char_t);
 
 #define LIT_CHAR_ASCII_DIGITS_BEGIN                 LIT_CHAR_0           /* decimal digits range */
 #define LIT_CHAR_ASCII_DIGITS_END                   LIT_CHAR_9
+
+/**
+ * Null character
+ */
+#define LIT_CHAR_NULL  ((ecma_char_t) '\0')
 
 /*
  * Part of IsWordChar abstract operation (ECMA-262 v5, 15.10.2.6, step 3)

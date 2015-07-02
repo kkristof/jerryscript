@@ -64,7 +64,7 @@ get_char (size_t i)
   {
     if (lit_utf8_iterator_is_eos (&iter))
     {
-      code_unit = ECMA_CHAR_NULL;
+      code_unit = LIT_CHAR_NULL;
       break;
     }
 
@@ -90,7 +90,7 @@ dump_current_line (void)
   while (!lit_utf8_iterator_is_eos (&iter))
   {
     ecma_char_t code_unit = lit_utf8_iterator_read_next_and_incr (&iter);
-    if (code_unit == '\n')
+    if (code_unit == LIT_CHAR_LF)
     {
       break;
     }
@@ -98,7 +98,7 @@ dump_current_line (void)
     lit_put_ecma_char (code_unit);
   }
 
-  lit_put_ecma_char ('\n');
+  lit_put_ecma_char (LIT_CHAR_LF);
 }
 
 static token
@@ -171,13 +171,19 @@ decode_keyword (const lit_utf8_byte_t *str_p, /**< characters buffer */
 {
   typedef struct
   {
-    const char *keyword_p;
+    const lit_utf8_byte_t *keyword_p;
+    lit_utf8_size_t size;
     keyword keyword_id;
   } kw_descr_t;
 
   const kw_descr_t keywords[] =
   {
-#define KW_DESCR(literal, keyword_id) { literal, keyword_id }
+#define KW_DESCR(literal, keyword_id) \
+    { \
+      (const lit_utf8_byte_t *) literal, \
+      (lit_utf8_size_t) (sizeof (literal) - 1u), \
+      keyword_id \
+    }
     KW_DESCR ("break", KW_BREAK),
     KW_DESCR ("case", KW_CASE),
     KW_DESCR ("catch", KW_CATCH),
@@ -229,8 +235,8 @@ decode_keyword (const lit_utf8_byte_t *str_p, /**< characters buffer */
   {
     if (lit_compare_utf8_strings (str_p,
                                   str_size,
-                                  (lit_utf8_byte_t *) keywords[i].keyword_p,
-                                  (lit_utf8_size_t) strlen (keywords[i].keyword_p)))
+                                  keywords[i].keyword_p,
+                                  keywords[i].size))
     {
       kw = keywords[i].keyword_id;
       break;
@@ -251,7 +257,7 @@ decode_keyword (const lit_utf8_byte_t *str_p, /**< characters buffer */
       case KW_STATIC:
       case KW_YIELD:
       {
-        return convert_string_to_token (TOK_NAME, str_p, (ecma_length_t) str_size);
+        return convert_string_to_token (TOK_NAME, str_p, str_size);
       }
 
       default:
@@ -375,53 +381,53 @@ convert_single_escape_character (ecma_char_t c, /**< character to decode */
 
   switch (c)
   {
-    case 'b':
+    case LIT_CHAR_LOWERCASE_B:
     {
-      converted_char = (ecma_char_t) '\b';
+      converted_char = LIT_CHAR_BS;
       break;
     }
 
-    case 't':
+    case LIT_CHAR_LOWERCASE_T:
     {
-      converted_char = (ecma_char_t) '\t';
+      converted_char = LIT_CHAR_TAB;
       break;
     }
 
-    case 'n':
+    case LIT_CHAR_LOWERCASE_N:
     {
-      converted_char = (ecma_char_t) '\n';
+      converted_char = LIT_CHAR_LF;
       break;
     }
 
-    case 'v':
+    case LIT_CHAR_LOWERCASE_V:
     {
-      converted_char = (ecma_char_t) '\v';
+      converted_char = LIT_CHAR_VTAB;
       break;
     }
 
-    case 'f':
+    case LIT_CHAR_LOWERCASE_F:
     {
-      converted_char = (ecma_char_t) '\f';
+      converted_char = LIT_CHAR_FF;
       break;
     }
 
-    case 'r':
+    case LIT_CHAR_LOWERCASE_R:
     {
-      converted_char = (ecma_char_t) '\r';
+      converted_char = LIT_CHAR_CR;
       break;
     }
 
-    case '"':
-    case '\'':
-    case '\\':
+    case LIT_CHAR_DOUBLE_QUOTE:
+    case LIT_CHAR_SINGLE_QUOTE:
+    case LIT_CHAR_BACKSLASH:
     {
-      converted_char = (ecma_char_t) c;
+      converted_char = c;
       break;
     }
 
     default:
     {
-      converted_char = (ecma_char_t) c;
+      converted_char = c;
       is_single_escape_character = false;
       break;
     }
@@ -469,20 +475,20 @@ convert_string_to_token_transform_escape_seq (token_type tok_type, /**< type of 
   bool every_char_islower = true;
   bool every_char_allowed_in_identifier = true;
 
-  ecma_char_t prev_converted_char = ECMA_CHAR_NULL;
+  ecma_char_t prev_converted_char = LIT_CHAR_NULL;
   while (!lit_utf8_iterator_is_eos (&source_str_iter))
   {
     ecma_char_t converted_char = lit_utf8_iterator_read_next_and_incr (&source_str_iter);
 
-    if (converted_char == '\\')
+    if (converted_char == LIT_CHAR_BACKSLASH)
     {
       const ecma_char_t escape_character = lit_utf8_iterator_read_next_and_incr (&source_str_iter);
 
       if (isdigit (escape_character))
       {
-        if (escape_character == '0')
+        if (escape_character == LIT_CHAR_0)
         {
-          converted_char = ECMA_CHAR_NULL;
+          converted_char = LIT_CHAR_NULL;
         }
         else
         {
@@ -491,10 +497,10 @@ convert_string_to_token_transform_escape_seq (token_type tok_type, /**< type of 
           break;
         }
       }
-      else if (escape_character == 'u'
-               || escape_character == 'x')
+      else if (escape_character == LIT_CHAR_LOWERCASE_U
+               || escape_character == LIT_CHAR_LOWERCASE_X)
       {
-        const uint32_t hex_chars_num = (escape_character == 'u' ? 4u : 2u);
+        const uint32_t hex_chars_num = (escape_character == LIT_CHAR_LOWERCASE_U ? 4u : 2u);
 
         if (lit_utf8_iterator_get_offset (&source_str_iter) + hex_chars_num > source_str_size)
         {
@@ -548,8 +554,8 @@ convert_string_to_token_transform_escape_seq (token_type tok_type, /**< type of 
         {
           ecma_char_t ecma_char = lit_utf8_iterator_read_next (&source_str_iter);
 
-          if (escape_character == '\x0D'
-              && ecma_char == '\x0A')
+          if (escape_character == LIT_CHAR_CR
+              && ecma_char == LIT_CHAR_LF)
           {
             lit_utf8_iterator_incr (&source_str_iter);
           }
@@ -584,8 +590,8 @@ convert_string_to_token_transform_escape_seq (token_type tok_type, /**< type of 
 
       if (!isalpha (converted_char)
           && !isdigit (converted_char)
-          && converted_char != '$'
-          && converted_char != '_')
+          && converted_char != LIT_CHAR_DOLLAR_SIGN
+          && converted_char != LIT_CHAR_UNDERSCORE)
       {
         every_char_allowed_in_identifier = false;
       }
@@ -634,7 +640,10 @@ parse_name (void)
 
   token known_token = empty_token;
 
-  JERRY_ASSERT (isalpha (c) || c == '$' || c == '_' || c == '\\');
+  JERRY_ASSERT (isalpha (c)
+                || c == LIT_CHAR_DOLLAR_SIGN
+                || c == LIT_CHAR_UNDERSCORE
+                || c == LIT_CHAR_BACKSLASH);
 
   new_token ();
 
@@ -644,9 +653,9 @@ parse_name (void)
 
     if (!isalpha (c)
         && !isdigit (c)
-        && c != '$'
-        && c != '_'
-        && c != '\\')
+        && c != LIT_CHAR_DOLLAR_SIGN
+        && c != LIT_CHAR_UNDERSCORE
+        && c != LIT_CHAR_BACKSLASH)
     {
       break;
     }
@@ -654,9 +663,9 @@ parse_name (void)
     {
       consume_char ();
 
-      if (c == '\\')
+      if (c == LIT_CHAR_BACKSLASH)
       {
-        bool is_correct_sequence = (LA (0) == 'u');
+        bool is_correct_sequence = (LA (0) == LIT_CHAR_LOWERCASE_U);
         if (is_correct_sequence)
         {
           consume_char ();
@@ -708,17 +717,18 @@ parse_number (void)
   uint32_t res = 0;
   token known_token;
 
-  JERRY_ASSERT (isdigit (c) || c == '.');
+  JERRY_ASSERT (isdigit (c) || c == LIT_CHAR_DOT);
 
-  if (c == '0')
+  if (c == LIT_CHAR_0)
   {
-    if (LA (1) == 'x' || LA (1) == 'X')
+    if (LA (1) == LIT_CHAR_LOWERCASE_X
+        || LA (1) == LIT_CHAR_UPPERCASE_X)
     {
       is_hex = true;
     }
   }
 
-  if (c == '.')
+  if (c == LIT_CHAR_DOT)
   {
     JERRY_ASSERT (!isalpha (LA (1)));
     is_fp = true;
@@ -740,7 +750,7 @@ parse_number (void)
       consume_char ();
     }
 
-    if (isalpha (c) || c == '_' || c == '$')
+    if (isalpha (c) || c == LIT_CHAR_UNDERSCORE || c == LIT_CHAR_DOLLAR_SIGN)
     {
       PARSE_ERROR ("Integer literal shall not contain non-digit characters",
                    lit_utf8_iterator_get_offset (&src_iter));
@@ -794,21 +804,23 @@ parse_number (void)
   while (true)
   {
     c = LA (0);
-    if (is_fp && c == '.')
+    if (is_fp && c == LIT_CHAR_DOT)
     {
       FIXME (/* This is wrong: 1..toString ().  */)
       PARSE_ERROR ("Integer literal shall not contain more than one dot character",
                    lit_utf8_iterator_get_offset (&src_iter));
     }
-    if (is_exp && (c == 'e' || c == 'E'))
+    if (is_exp && (c == LIT_CHAR_LOWERCASE_E || c == LIT_CHAR_UPPERCASE_E))
     {
       PARSE_ERROR ("Integer literal shall not contain more than exponential marker ('e' or 'E')",
                    lit_utf8_iterator_get_offset (&src_iter));
     }
 
-    if (c == '.')
+    if (c == LIT_CHAR_DOT)
     {
-      if (isalpha (LA (1)) || LA (1) == '_' || LA (1) == '$')
+      if (isalpha (LA (1))
+          || LA (1) == LIT_CHAR_UNDERSCORE
+          || LA (1) == LIT_CHAR_DOLLAR_SIGN)
       {
         PARSE_ERROR ("Integer literal shall not contain non-digit character after got character",
                      lit_utf8_iterator_get_offset (&src_iter));
@@ -818,9 +830,10 @@ parse_number (void)
       continue;
     }
 
-    if (c == 'e' || c == 'E')
+    if (c == LIT_CHAR_LOWERCASE_E || c == LIT_CHAR_UPPERCASE_E)
     {
-      if (LA (1) == '-' || LA (1) == '+')
+      if (LA (1) == LIT_CHAR_MINUS
+          || LA (1) == LIT_CHAR_PLUS)
       {
         consume_char ();
       }
@@ -834,7 +847,9 @@ parse_number (void)
       continue;
     }
 
-    if (isalpha (c) || c == '_' || c == '$')
+    if (isalpha (c)
+        || LA (1) == LIT_CHAR_UNDERSCORE
+        || LA (1) == LIT_CHAR_DOLLAR_SIGN)
     {
       PARSE_ERROR ("Integer literal shall not contain non-digit characters", lit_utf8_iterator_get_offset (&src_iter));
     }
@@ -857,7 +872,7 @@ parse_number (void)
     return known_token;
   }
 
-  if (*token_start == '0' && tok_length != 1)
+  if (*token_start == LIT_CHAR_0 && tok_length != 1)
   {
     if (strict_mode)
     {
@@ -923,20 +938,21 @@ static token
 parse_string (void)
 {
   ecma_char_t c = (ecma_char_t) LA (0);
-  JERRY_ASSERT (c == '\'' || c == '"');
+  JERRY_ASSERT (c == LIT_CHAR_SINGLE_QUOTE
+                || c == LIT_CHAR_DOUBLE_QUOTE);
 
+  /* Consume quote character */ 
   consume_char ();
   new_token ();
 
-  const bool is_double_quoted = (c == '"');
-  const char end_char = (is_double_quoted ? '"' : '\'');
+  const ecma_char_t end_char = c;
 
   do
   {
-    c = (ecma_char_t) LA (0);
+    c = LA (0);
     consume_char ();
 
-    if (c == '\0')
+    if (c == LIT_CHAR_NULL)
     {
       PARSE_ERROR ("Unclosed string", token_start - buffer_start);
     }
@@ -944,7 +960,7 @@ parse_string (void)
     {
       PARSE_ERROR ("String literal shall not contain newline character", token_start - buffer_start);
     }
-    else if (c == '\\')
+    else if (c == LIT_CHAR_BACKSLASH)
     {
       ecma_char_t nc = (ecma_char_t) LA (0);
 
@@ -991,7 +1007,7 @@ parse_regexp (void)
   bool is_char_class = false;
 
   /* Eat up '/' */
-  JERRY_ASSERT ((ecma_char_t) LA (0) == '/');
+  JERRY_ASSERT ((ecma_char_t) LA (0) == LIT_CHAR_SLASH);
   consume_char ();
   new_token ();
 
@@ -999,27 +1015,27 @@ parse_regexp (void)
   {
     ecma_char_t c = (ecma_char_t) LA (0);
 
-    if (c == '\0')
+    if (c == LIT_CHAR_NULL)
     {
       PARSE_ERROR ("Unclosed string", token_start - buffer_start);
     }
-    else if (c == '\n')
+    else if (c == LIT_CHAR_LF)
     {
       PARSE_ERROR ("RegExp literal shall not contain newline character", token_start - buffer_start);
     }
-    else if (c == '\\')
+    else if (c == LIT_CHAR_BACKSLASH)
     {
       consume_char ();
     }
-    else if (c == '[')
+    else if (c == LIT_CHAR_LEFT_SQUARE)
     {
       is_char_class = true;
     }
-    else if (c == ']')
+    else if (c == LIT_CHAR_RIGHT_SQUARE)
     {
       is_char_class = false;
     }
-    else if (c == '/' && !is_char_class)
+    else if (c == LIT_CHAR_SLASH && !is_char_class)
     {
       /* Eat up '/' */
       consume_char ();
@@ -1034,7 +1050,7 @@ parse_regexp (void)
   {
     ecma_char_t c = (ecma_char_t) LA (0);
 
-    if (c == '\0'
+    if (c == LIT_CHAR_NULL
         || !lit_char_is_word_char (c)
         || lit_char_is_line_terminator (c))
     {
@@ -1057,7 +1073,8 @@ grobble_whitespaces (void)
 {
   ecma_char_t c = LA (0);
 
-  while ((isspace (c) && c != '\n'))
+  while (isspace (c)
+         && c != LIT_CHAR_LF)
   {
     consume_char ();
     c = LA (0);
@@ -1071,10 +1088,10 @@ replace_comment_by_newline (void)
   bool multiline;
   bool was_newlines = false;
 
-  JERRY_ASSERT (LA (0) == '/');
-  JERRY_ASSERT (LA (1) == '/' || LA (1) == '*');
+  JERRY_ASSERT (LA (0) == LIT_CHAR_SLASH);
+  JERRY_ASSERT (LA (1) == LIT_CHAR_SLASH || LA (1) == LIT_CHAR_ASTERISK);
 
-  multiline = (LA (1) == '*');
+  multiline = (LA (1) == LIT_CHAR_ASTERISK);
 
   consume_char ();
   consume_char ();
@@ -1082,11 +1099,11 @@ replace_comment_by_newline (void)
   while (true)
   {
     c = LA (0);
-    if (!multiline && (c == '\n' || c == '\0'))
+    if (!multiline && (c == LIT_CHAR_LF || c == LIT_CHAR_NULL))
     {
       return false;
     }
-    if (multiline && c == '*' && LA (1) == '/')
+    if (multiline && c == LIT_CHAR_ASTERISK && LA (1) == LIT_CHAR_SLASH)
     {
       consume_char ();
       consume_char ();
@@ -1100,11 +1117,11 @@ replace_comment_by_newline (void)
         return false;
       }
     }
-    if (multiline && c == '\n')
+    if (multiline && c == LIT_CHAR_LF)
     {
       was_newlines = true;
     }
-    if (multiline && c == '\0')
+    if (multiline && c == LIT_CHAR_NULL)
     {
       PARSE_ERROR ("Unclosed multiline comment", lit_utf8_iterator_get_offset (&src_iter));
     }
@@ -1119,28 +1136,33 @@ lexer_next_token_private (void)
 
   JERRY_ASSERT (token_start == NULL);
 
-  if (isalpha (c) || c == '$' || c == '_' || c == '\\')
+  if (isalpha (c)
+      || c == LIT_CHAR_DOLLAR_SIGN
+      || c == LIT_CHAR_UNDERSCORE
+      || c == LIT_CHAR_BACKSLASH)
   {
     return parse_name ();
   }
 
-  if (isdigit (c) || (c == '.' && isdigit (LA (1))))
+  if (isdigit (c)
+      || (c == LIT_CHAR_DOT && isdigit (LA (1))))
   {
     return parse_number ();
   }
 
-  if (c == '\n')
+  if (c == LIT_CHAR_LF)
   {
     consume_char ();
     return create_token (TOK_NEWLINE, 0);
   }
 
-  if (c == '\0')
+  if (c == LIT_CHAR_NULL)
   {
     return create_token (TOK_EOF, 0);
   }
 
-  if (c == '\'' || c == '"')
+  if (c == LIT_CHAR_SINGLE_QUOTE
+      || c == LIT_CHAR_DOUBLE_QUOTE)
   {
     return parse_string ();
   }
@@ -1151,7 +1173,7 @@ lexer_next_token_private (void)
     return lexer_next_token_private ();
   }
 
-  if (c == '/' && LA (1) == '*')
+  if (c == LIT_CHAR_SLASH && LA (1) == LIT_CHAR_ASTERISK)
   {
     if (replace_comment_by_newline ())
     {
@@ -1169,9 +1191,9 @@ lexer_next_token_private (void)
   }
 
 
-  if (c == '/')
+  if (c == LIT_CHAR_SLASH)
   {
-    if (LA (1) == '/')
+    if (LA (1) == LIT_CHAR_SLASH)
     {
       replace_comment_by_newline ();
       return lexer_next_token_private ();
@@ -1193,63 +1215,63 @@ lexer_next_token_private (void)
 
   switch (c)
   {
-    case '{': RETURN_PUNC (TOK_OPEN_BRACE); break;
-    case '}': RETURN_PUNC (TOK_CLOSE_BRACE); break;
-    case '(': RETURN_PUNC (TOK_OPEN_PAREN); break;
-    case ')': RETURN_PUNC (TOK_CLOSE_PAREN); break;
-    case '[': RETURN_PUNC (TOK_OPEN_SQUARE); break;
-    case ']': RETURN_PUNC (TOK_CLOSE_SQUARE); break;
-    case '.': RETURN_PUNC (TOK_DOT); break;
-    case ';': RETURN_PUNC (TOK_SEMICOLON); break;
-    case ',': RETURN_PUNC (TOK_COMMA); break;
-    case '~': RETURN_PUNC (TOK_COMPL); break;
-    case ':': RETURN_PUNC (TOK_COLON); break;
-    case '?': RETURN_PUNC (TOK_QUERY); break;
+    case LIT_CHAR_LEFT_BRACE: RETURN_PUNC (TOK_OPEN_BRACE); break;
+    case LIT_CHAR_RIGHT_BRACE: RETURN_PUNC (TOK_CLOSE_BRACE); break;
+    case LIT_CHAR_LEFT_PAREN: RETURN_PUNC (TOK_OPEN_PAREN); break;
+    case LIT_CHAR_RIGHT_PAREN: RETURN_PUNC (TOK_CLOSE_PAREN); break;
+    case LIT_CHAR_LEFT_SQUARE: RETURN_PUNC (TOK_OPEN_SQUARE); break;
+    case LIT_CHAR_RIGHT_SQUARE: RETURN_PUNC (TOK_CLOSE_SQUARE); break;
+    case LIT_CHAR_DOT: RETURN_PUNC (TOK_DOT); break;
+    case LIT_CHAR_SEMICOLON: RETURN_PUNC (TOK_SEMICOLON); break;
+    case LIT_CHAR_COMMA: RETURN_PUNC (TOK_COMMA); break;
+    case LIT_CHAR_TILDE: RETURN_PUNC (TOK_COMPL); break;
+    case LIT_CHAR_COLON: RETURN_PUNC (TOK_COLON); break;
+    case LIT_CHAR_QUESTION: RETURN_PUNC (TOK_QUERY); break;
 
-    case '*': IF_LA_IS ('=', TOK_MULT_EQ, TOK_MULT); break;
-    case '/': IF_LA_IS ('=', TOK_DIV_EQ, TOK_DIV); break;
-    case '^': IF_LA_IS ('=', TOK_XOR_EQ, TOK_XOR); break;
-    case '%': IF_LA_IS ('=', TOK_MOD_EQ, TOK_MOD); break;
+    case LIT_CHAR_ASTERISK: IF_LA_IS (LIT_CHAR_EQUALS, TOK_MULT_EQ, TOK_MULT); break;
+    case LIT_CHAR_SLASH: IF_LA_IS (LIT_CHAR_EQUALS, TOK_DIV_EQ, TOK_DIV); break;
+    case LIT_CHAR_CIRCUMFLEX: IF_LA_IS (LIT_CHAR_EQUALS, TOK_XOR_EQ, TOK_XOR); break;
+    case LIT_CHAR_PERCENT: IF_LA_IS (LIT_CHAR_EQUALS, TOK_MOD_EQ, TOK_MOD); break;
 
-    case '+': IF_LA_IS_OR ('+', TOK_DOUBLE_PLUS, '=', TOK_PLUS_EQ, TOK_PLUS); break;
-    case '-': IF_LA_IS_OR ('-', TOK_DOUBLE_MINUS, '=', TOK_MINUS_EQ, TOK_MINUS); break;
-    case '&': IF_LA_IS_OR ('&', TOK_DOUBLE_AND, '=', TOK_AND_EQ, TOK_AND); break;
-    case '|': IF_LA_IS_OR ('|', TOK_DOUBLE_OR, '=', TOK_OR_EQ, TOK_OR); break;
+    case LIT_CHAR_PLUS: IF_LA_IS_OR (LIT_CHAR_PLUS, TOK_DOUBLE_PLUS, LIT_CHAR_EQUALS, TOK_PLUS_EQ, TOK_PLUS); break;
+    case LIT_CHAR_MINUS: IF_LA_IS_OR (LIT_CHAR_MINUS, TOK_DOUBLE_MINUS, LIT_CHAR_EQUALS, TOK_MINUS_EQ, TOK_MINUS); break;
+    case LIT_CHAR_AMPERSAND: IF_LA_IS_OR (LIT_CHAR_AMPERSAND, TOK_DOUBLE_AND, LIT_CHAR_EQUALS, TOK_AND_EQ, TOK_AND); break;
+    case LIT_CHAR_VLINE: IF_LA_IS_OR (LIT_CHAR_VLINE, TOK_DOUBLE_OR, LIT_CHAR_EQUALS, TOK_OR_EQ, TOK_OR); break;
 
-    case '<':
+    case LIT_CHAR_LESS_THAN:
     {
       switch (LA (1))
       {
-        case '<': IF_LA_N_IS ('=', TOK_LSHIFT_EQ, TOK_LSHIFT, 2); break;
-        case '=': RETURN_PUNC_EX (TOK_LESS_EQ, 2); break;
+        case LIT_CHAR_LESS_THAN: IF_LA_N_IS (LIT_CHAR_EQUALS, TOK_LSHIFT_EQ, TOK_LSHIFT, 2); break;
+        case LIT_CHAR_EQUALS: RETURN_PUNC_EX (TOK_LESS_EQ, 2); break;
         default: RETURN_PUNC (TOK_LESS);
       }
       break;
     }
-    case '>':
+    case LIT_CHAR_GREATER_THAN:
     {
       switch (LA (1))
       {
-        case '>':
+        case LIT_CHAR_GREATER_THAN:
         {
           switch (LA (2))
           {
-            case '>': IF_LA_N_IS ('=', TOK_RSHIFT_EX_EQ, TOK_RSHIFT_EX, 3); break;
-            case '=': RETURN_PUNC_EX (TOK_RSHIFT_EQ, 3); break;
+            case LIT_CHAR_GREATER_THAN: IF_LA_N_IS (LIT_CHAR_EQUALS, TOK_RSHIFT_EX_EQ, TOK_RSHIFT_EX, 3); break;
+            case LIT_CHAR_EQUALS: RETURN_PUNC_EX (TOK_RSHIFT_EQ, 3); break;
             default: RETURN_PUNC_EX (TOK_RSHIFT, 2);
           }
           break;
         }
-        case '=': RETURN_PUNC_EX (TOK_GREATER_EQ, 2); break;
+        case LIT_CHAR_EQUALS: RETURN_PUNC_EX (TOK_GREATER_EQ, 2); break;
         default: RETURN_PUNC (TOK_GREATER);
       }
       break;
     }
-    case '=':
+    case LIT_CHAR_EQUALS:
     {
-      if (LA (1) == '=')
+      if (LA (1) == LIT_CHAR_EQUALS)
       {
-        IF_LA_N_IS ('=', TOK_TRIPLE_EQ, TOK_DOUBLE_EQ, 2);
+        IF_LA_N_IS (LIT_CHAR_EQUALS, TOK_TRIPLE_EQ, TOK_DOUBLE_EQ, 2);
       }
       else
       {
@@ -1257,11 +1279,11 @@ lexer_next_token_private (void)
       }
       break;
     }
-    case '!':
+    case LIT_CHAR_EXCLAMATION:
     {
-      if (LA (1) == '=')
+      if (LA (1) == LIT_CHAR_EQUALS)
       {
-        IF_LA_N_IS ('=', TOK_NOT_DOUBLE_EQ, TOK_NOT_EQ, 2);
+        IF_LA_N_IS (LIT_CHAR_EQUALS, TOK_NOT_DOUBLE_EQ, TOK_NOT_EQ, 2);
       }
       else
       {
@@ -1345,7 +1367,7 @@ lexer_locus_to_line_and_column (size_t locus, size_t *line, size_t *column)
   size_t l = 0, c = 0;
   for (buf = buffer_start; (size_t) (buf - buffer_start) < locus; buf++)
   {
-    if (*buf == '\n')
+    if (*buf == LIT_CHAR_LF)
     {
       c = 0;
       l++;
@@ -1368,17 +1390,17 @@ void
 lexer_dump_line (size_t line)
 {
   size_t l = 0;
-  for (const lit_utf8_byte_t *buf = buffer_start; *buf != '\0'; buf++)
+  for (const lit_utf8_byte_t *buf = buffer_start; *buf != LIT_CHAR_NULL; buf++)
   {
     if (l == line)
     {
-      for (; *buf != '\n' && *buf != '\0'; buf++)
+      for (; *buf != LIT_CHAR_LF && *buf != LIT_CHAR_NULL; buf++)
       {
         putchar (*buf);
       }
       return;
     }
-    if (*buf == '\n')
+    if (*buf == LIT_CHAR_LF)
     {
       l++;
     }
