@@ -1097,7 +1097,7 @@ lexer_parse_regexp (void)
 } /* lexer_parse_regexp */
 
 static bool
-replace_comment_by_newline (void)
+lexer_parse_comment (void)
 {
   ecma_char_t c = LA (0);
   bool multiline;
@@ -1114,35 +1114,41 @@ replace_comment_by_newline (void)
   while (true)
   {
     c = LA (0);
-    if (!multiline && (c == LIT_CHAR_LF || c == LIT_CHAR_NULL))
-    {
-      return false;
-    }
-    if (multiline && c == LIT_CHAR_ASTERISK && LA (1) == LIT_CHAR_SLASH)
-    {
-      consume_char ();
-      consume_char ();
 
-      if (was_newlines)
+    if (!multiline)
+    {
+      if (lit_char_is_line_terminator (c))
       {
         return true;
       }
-      else
+      else if (c == LIT_CHAR_NULL)
       {
         return false;
       }
     }
-    if (multiline && c == LIT_CHAR_LF)
+    else
     {
-      was_newlines = true;
+      if (c == LIT_CHAR_ASTERISK
+          && LA (1) == LIT_CHAR_SLASH)
+      {
+        consume_char ();
+        consume_char ();
+
+        return was_newlines;
+      }
+      else if (lit_char_is_line_terminator (c))
+      {
+        was_newlines = true;
+      }
+      else if (c == LIT_CHAR_NULL)
+      {
+        PARSE_ERROR ("Unclosed multiline comment", lit_utf8_iterator_get_offset (&src_iter));
+      }
     }
-    if (multiline && c == LIT_CHAR_NULL)
-    {
-      PARSE_ERROR ("Unclosed multiline comment", lit_utf8_iterator_get_offset (&src_iter));
-    }
+
     consume_char ();
   }
-}
+} /* lexer_parse_comment */
 
 /**
  * Parse and construct lexer token
@@ -1164,6 +1170,17 @@ lexer_parse_token (void)
 
       c = LA (0);
     }
+  }
+  else if (lit_char_is_line_terminator (c))
+  {
+    while (lit_char_is_line_terminator (c))
+    {
+      consume_char ();
+
+      c = LA (0);
+    }
+
+    return create_token (TOK_NEWLINE, 0);
   }
 
   JERRY_ASSERT (token_start == NULL);
@@ -1199,17 +1216,14 @@ lexer_parse_token (void)
     return lexer_parse_string ();
   }
 
-  /* ECMA-262 v5, 7.4, MultiLineComment */
-  if (c == LIT_CHAR_SLASH && LA (1) == LIT_CHAR_ASTERISK)
+  /* ECMA-262 v5, 7.4, SingleLineComment or MultiLineComment */
+  if (c == LIT_CHAR_SLASH
+      && (LA (1) == LIT_CHAR_SLASH
+          || LA (1) == LIT_CHAR_ASTERISK))
   {
-    if (replace_comment_by_newline ())
+    if (lexer_parse_comment ())
     {
-      token ret;
-
-      ret.type = TOK_NEWLINE;
-      ret.uid = 0;
-
-      return ret;
+      return create_token (TOK_NEWLINE, 0);
     }
     else
     {
@@ -1217,27 +1231,19 @@ lexer_parse_token (void)
     }
   }
 
-  if (c == LIT_CHAR_SLASH)
+  if (c == LIT_CHAR_SLASH
+      && !(sent_token.type == TOK_NAME
+           || sent_token.type == TOK_NULL
+           || sent_token.type == TOK_BOOL
+           || sent_token.type == TOK_CLOSE_BRACE
+           || sent_token.type == TOK_CLOSE_SQUARE
+           || sent_token.type == TOK_CLOSE_PAREN
+           || sent_token.type == TOK_SMALL_INT
+           || sent_token.type == TOK_NUMBER
+           || sent_token.type == TOK_STRING
+           || sent_token.type == TOK_REGEXP))
   {
-    /* ECMA-262 v5, 7.4, SingleLineComment */
-    if (LA (1) == LIT_CHAR_SLASH)
-    {
-      replace_comment_by_newline ();
-      return lexer_parse_token ();
-    }
-    else if (!(sent_token.type == TOK_NAME
-             || sent_token.type == TOK_NULL
-             || sent_token.type == TOK_BOOL
-             || sent_token.type == TOK_CLOSE_BRACE
-             || sent_token.type == TOK_CLOSE_SQUARE
-             || sent_token.type == TOK_CLOSE_PAREN
-             || sent_token.type == TOK_SMALL_INT
-             || sent_token.type == TOK_NUMBER
-             || sent_token.type == TOK_STRING
-             || sent_token.type == TOK_REGEXP))
-    {
-      return lexer_parse_regexp ();
-    }
+    return lexer_parse_regexp ();
   }
 
   /* ECMA-262 v5, 7.7, Punctuator */
@@ -1399,7 +1405,7 @@ lexer_parse_token (void)
     }
   }
 
-  PARSE_SORRY ("Unknown character", lit_utf8_iterator_get_offset (&src_iter));
+  PARSE_ERROR ("Illegal character", lit_utf8_iterator_get_offset (&src_iter));
 } /* lexer_parse_token */
 
 token
