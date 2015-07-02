@@ -826,52 +826,45 @@ lexer_parse_number (void)
     while (true)
     {
       c = LA (0);
-      if (is_fp && c == LIT_CHAR_DOT)
-      {
-        /* token is constructed at end of function */
-        break;
-      }
-      if (is_exp && (c == LIT_CHAR_LOWERCASE_E || c == LIT_CHAR_UPPERCASE_E))
-      {
-        PARSE_ERROR ("Numeric literal shall not contain more than exponential marker ('e' or 'E')",
-                     lit_utf8_iterator_get_offset (&src_iter));
-      }
 
       if (c == LIT_CHAR_DOT)
       {
-        is_fp = true;
-        consume_char ();
-
-        if (lexer_is_char_can_be_identifier_start (LA (0)))
+        if (is_fp)
         {
-          PARSE_ERROR ("Numeric literal shall not contain non-numeric character after dot character",
-                       lit_utf8_iterator_get_offset (&src_iter));
+          /* token is constructed at end of function */
+          break;
         }
-
-        continue;
-      }
-
-      if (c == LIT_CHAR_LOWERCASE_E
-          || c == LIT_CHAR_UPPERCASE_E)
-      {
-        if (LA (1) == LIT_CHAR_MINUS
-            || LA (1) == LIT_CHAR_PLUS)
+        else
         {
+          is_fp = true;
           consume_char ();
-        }
 
-        if (!lit_char_is_decimal_digit (LA (1)))
+          continue;
+        }
+      }
+      else if (c == LIT_CHAR_LOWERCASE_E
+               || c == LIT_CHAR_UPPERCASE_E)
+      {
+        if (is_exp)
         {
-          PARSE_ERROR ("Numeric literal shall not contain non-numeric character after exponential marker ('e' or 'E')",
+          PARSE_ERROR ("Numeric literal shall not contain more than exponential marker ('e' or 'E')",
                        lit_utf8_iterator_get_offset (&src_iter));
         }
+        else
+        {
+          is_exp = true;
+          consume_char ();
 
-        is_exp = true;
-        consume_char ();
-        continue;
+          if (LA (0) == LIT_CHAR_MINUS
+              || LA (0) == LIT_CHAR_PLUS)
+          {
+            consume_char ();
+          }
+
+          continue;
+        }
       }
-
-      if (!lit_char_is_decimal_digit (c))
+      else if (!lit_char_is_decimal_digit (c))
       {
         if (lexer_is_char_can_be_identifier_start (c))
         {
