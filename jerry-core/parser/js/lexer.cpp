@@ -634,7 +634,7 @@ convert_string_to_token_transform_escape_seq (token_type tok_type, /**< type of 
  * Parse identifier (ECMA-262 v5, 7.6) or keyword (7.6.1.1)
  */
 static token
-parse_name (void)
+lexer_parse_identifier (void)
 {
   ecma_char_t c = (ecma_char_t) LA (0);
 
@@ -672,12 +672,13 @@ parse_name (void)
   token_start = NULL;
 
   return known_token;
-} /* parse_name */
+} /* lexer_parse_identifier */
 
-/* In this function we cannot use strtol function
-   since there is no octal literals in ECMAscript.  */
+/**
+ * Parse numeric literal (ECMA-262, v5, 7.8.3)
+ */
 static token
-parse_number (void)
+lexer_parse_number (void)
 {
   ecma_char_t c = LA (0);
   bool is_hex = false;
@@ -901,13 +902,13 @@ parse_number (void)
     token_start = NULL;
     return known_token;
   }
-}
+} /* lexer_parse_number */
 
 /**
  * Parse string literal (ECMA-262 v5, 7.8.4)
  */
 static token
-parse_string (void)
+lexer_parse_string (void)
 {
   ecma_char_t c = (ecma_char_t) LA (0);
   JERRY_ASSERT (c == LIT_CHAR_SINGLE_QUOTE
@@ -967,13 +968,13 @@ parse_string (void)
   token_start = NULL;
 
   return ret;
-} /* parse_string */
+} /* lexer_parse_string */
 
 /**
  * Parse string literal (ECMA-262 v5, 7.8.5)
  */
 static token
-parse_regexp (void)
+lexer_parse_regexp (void)
 {
   token result;
   bool is_char_class = false;
@@ -1038,7 +1039,7 @@ parse_regexp (void)
 
   token_start = NULL;
   return result;
-} /* parse_regexp */
+} /* lexer_parse_regexp */
 
 static bool
 replace_comment_by_newline (void)
@@ -1088,8 +1089,15 @@ replace_comment_by_newline (void)
   }
 }
 
+/**
+ * Parse and construct lexer token
+ *
+ * Note:
+ *      Currently, lexer token doesn't fully correspond to Token, defined in ECMA-262, v5, 7.5
+ *      For example, TOK_NEWLINE is a white-space from ECMA-262 v5 viewpoint.
+ */
 static token
-lexer_next_token_private (void)
+lexer_parse_token (void)
 {
   ecma_char_t c = LA (0);
 
@@ -1111,14 +1119,14 @@ lexer_next_token_private (void)
       || c == LIT_CHAR_UNDERSCORE
       || c == LIT_CHAR_BACKSLASH)
   {
-    return parse_name ();
+    return lexer_parse_identifier ();
   }
 
   /* ECMA-262 v5, 7.8.3, Numeric literal */
   if (isdigit (c)
       || (c == LIT_CHAR_DOT && isdigit (LA (1))))
   {
-    return parse_number ();
+    return lexer_parse_number ();
   }
 
   if (c == LIT_CHAR_LF)
@@ -1135,7 +1143,7 @@ lexer_next_token_private (void)
   if (c == LIT_CHAR_SINGLE_QUOTE
       || c == LIT_CHAR_DOUBLE_QUOTE)
   {
-    return parse_string ();
+    return lexer_parse_string ();
   }
 
   /* ECMA-262 v5, 7.4, MultiLineComment */
@@ -1152,7 +1160,7 @@ lexer_next_token_private (void)
     }
     else
     {
-      return lexer_next_token_private ();
+      return lexer_parse_token ();
     }
   }
 
@@ -1162,7 +1170,7 @@ lexer_next_token_private (void)
     if (LA (1) == LIT_CHAR_SLASH)
     {
       replace_comment_by_newline ();
-      return lexer_next_token_private ();
+      return lexer_parse_token ();
     }
     else if (!(sent_token.type == TOK_NAME
              || sent_token.type == TOK_NULL
@@ -1175,7 +1183,7 @@ lexer_next_token_private (void)
              || sent_token.type == TOK_STRING
              || sent_token.type == TOK_REGEXP))
     {
-      return parse_regexp ();
+      return lexer_parse_regexp ();
     }
   }
 
@@ -1339,7 +1347,7 @@ lexer_next_token_private (void)
   }
 
   PARSE_SORRY ("Unknown character", lit_utf8_iterator_get_offset (&src_iter));
-}
+} /* lexer_parse_token */
 
 token
 lexer_next_token (void)
@@ -1370,7 +1378,7 @@ lexer_next_token (void)
   }
 
   prev_token = sent_token;
-  sent_token = lexer_next_token_private ();
+  sent_token = lexer_parse_token ();
 
   if (sent_token.type == TOK_NEWLINE)
   {
