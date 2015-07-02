@@ -560,17 +560,24 @@ lexer_transform_escape_sequences (const jerry_api_char_t *source_str_p, /**< str
 
       const ecma_char_t char_after_next = lit_utf8_iterator_read_next_and_incr (&source_str_iter);
 
-      if (isdigit (char_after_next))
+      if (lit_char_is_decimal_digit (char_after_next))
       {
-        if (char_after_next == LIT_CHAR_0)
+        if (lit_char_is_octal_digit (char_after_next))
         {
-          converted_char = LIT_CHAR_NULL;
-        }
-        else
-        {
-          /* Implementation-defined (ECMA-262 v5, B.1.2): octal escape sequences are not implemented */
-          is_correct_sequence = false;
-          break;
+          if (char_after_next == LIT_CHAR_0
+              && (lit_utf8_iterator_is_eos (&source_str_iter)
+                  || !lit_char_is_octal_digit (lit_utf8_iterator_read_next (&source_str_iter))))
+          {
+            lit_utf8_iterator_incr (&source_str_iter);
+
+            converted_char = LIT_CHAR_NULL;
+          }
+          else
+          {
+            /* Implementation-defined (ECMA-262 v5, B.1.2): octal escape sequences are not implemented */
+            is_correct_sequence = false;
+            break;
+          }
         }
       }
       else if (char_after_next == LIT_CHAR_LOWERCASE_U
