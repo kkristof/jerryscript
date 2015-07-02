@@ -940,7 +940,7 @@ lexer_parse_number (void)
 static token
 lexer_parse_string (void)
 {
-  ecma_char_t c = (ecma_char_t) LA (0);
+  ecma_char_t c = LA (0);
   JERRY_ASSERT (c == LIT_CHAR_SINGLE_QUOTE
                 || c == LIT_CHAR_DOUBLE_QUOTE);
 
@@ -969,14 +969,14 @@ lexer_parse_string (void)
     {
       is_escape_sequence_occured = true;
 
-      ecma_char_t nc = (ecma_char_t) LA (0);
+      ecma_char_t nc = LA (0);
       consume_char ();
 
       if (lit_char_is_line_terminator (nc))
       {
         if (nc == LIT_CHAR_CR)
         {
-          nc = (ecma_char_t) LA (0);
+          nc = LA (0);
 
           if (nc == LIT_CHAR_LF)
           {
@@ -1028,13 +1028,13 @@ lexer_parse_regexp (void)
   bool is_char_class = false;
 
   /* Eat up '/' */
-  JERRY_ASSERT ((ecma_char_t) LA (0) == LIT_CHAR_SLASH);
+  JERRY_ASSERT (LA (0) == LIT_CHAR_SLASH);
   consume_char ();
   new_token ();
 
   while (true)
   {
-    ecma_char_t c = (ecma_char_t) LA (0);
+    ecma_char_t c = LA (0);
 
     if (c == LIT_CHAR_NULL)
     {
@@ -1069,7 +1069,7 @@ lexer_parse_regexp (void)
   /* Try to parse RegExp flags */
   while (true)
   {
-    ecma_char_t c = (ecma_char_t) LA (0);
+    ecma_char_t c = LA (0);
 
     if (c == LIT_CHAR_NULL
         || !lit_char_is_word_char (c)
