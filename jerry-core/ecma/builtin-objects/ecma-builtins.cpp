@@ -31,12 +31,12 @@
  * @{
  */
 
-static ecma_completion_value_t
-ecma_builtin_dispatch_routine (ecma_builtin_id_t builtin_object_id,
-                               uint16_t builtin_routine_id,
-                               ecma_value_t this_arg_value,
-                               const ecma_value_t arguments_list[],
-                               ecma_length_t arguments_number);
+// static ecma_completion_value_t
+// ecma_builtin_dispatch_routine (ecma_builtin_id_t builtin_object_id,
+//                                uint16_t builtin_routine_id,
+//                                ecma_value_t this_arg_value,
+//                                const ecma_value_t arguments_list[],
+//                                ecma_length_t arguments_number);
 static void ecma_instantiate_builtin (ecma_builtin_id_t id);
 
 /**
@@ -541,7 +541,7 @@ ecma_builtin_dispatch_construct (ecma_object_t *obj_p, /**< built-in object */
  * @return completion-value
  *         Returned value must be freed with ecma_free_completion_value.
  */
-static ecma_completion_value_t
+ecma_completion_value_t
 ecma_builtin_dispatch_routine (ecma_builtin_id_t builtin_object_id, /**< built-in object' identifier */
                                uint16_t builtin_routine_id, /**< builtin-wide identifier
                                                              *   of the built-in object's

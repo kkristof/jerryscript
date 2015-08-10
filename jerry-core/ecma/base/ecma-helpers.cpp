@@ -459,12 +459,14 @@ ecma_find_internal_property (ecma_object_t *object_p, /**< object descriptor */
   JERRY_ASSERT (property_id != ECMA_INTERNAL_PROPERTY_PROTOTYPE
                 && property_id != ECMA_INTERNAL_PROPERTY_EXTENSIBLE);
 
+  // printf("property_id %d\n", property_id);
   for (ecma_property_t *property_p = ecma_get_property_list (object_p);
        property_p != NULL;
        property_p = ECMA_GET_POINTER (ecma_property_t, property_p->next_property_p))
   {
     if (property_p->type == ECMA_PROPERTY_INTERNAL)
     {
+      // printf("internal_property.type %d\n", property_p->u.internal_property.type);
       if (property_p->u.internal_property.type == property_id)
       {
         return property_p;

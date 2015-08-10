@@ -23,6 +23,7 @@
 #include "ecma-function-object.h"
 #include "ecma-exceptions.h"
 #include "ecma-helpers.h"
+#include "ecma-globals.h"
 #include "ecma-objects.h"
 #include "ecma-try-catch-macro.h"
 #include "lit-magic-strings.h"
@@ -206,6 +207,19 @@ ecma_builtin_helper_object_get_properties (ecma_object_t *obj_p, /** < object */
   ecma_object_t *new_array_p = ecma_get_object_from_completion_value (new_array);
 
   uint32_t index = 0;
+
+  if (ecma_get_object_is_builtin(obj_p))
+  {
+    ecma_property_t *built_in_id_prop_p = ecma_get_internal_property (obj_p,
+                                                                      ECMA_INTERNAL_PROPERTY_BUILT_IN_ID);
+    ecma_builtin_id_t built_in_id = (ecma_builtin_id_t) built_in_id_prop_p->u.internal_property.value;
+
+    return ecma_builtin_dispatch_routine (built_in_id,
+                                          65535,
+                                          0,
+                                          NULL,
+                                          0);
+  }
 
   for (ecma_property_t *property_p = ecma_get_property_list (obj_p);
        property_p != NULL;

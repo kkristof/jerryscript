@@ -55,4 +55,11 @@ ecma_builtin_is (ecma_object_t *obj_p,
                  ecma_builtin_id_t builtin_id);
 extern ecma_object_t*
 ecma_builtin_get (ecma_builtin_id_t builtin_id);
+
+extern ecma_completion_value_t
+ecma_builtin_dispatch_routine (ecma_builtin_id_t builtin_object_id,
+                               uint16_t builtin_routine_id,
+                               ecma_value_t this_arg_value,
+                               const ecma_value_t arguments_list[],
+                               ecma_length_t arguments_number);
 #endif /* !ECMA_BUILTINS_H */

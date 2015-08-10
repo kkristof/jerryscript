@@ -31,6 +31,8 @@
   PASTE (PASTE (ecma_builtin_, builtin_underscored_id), _try_to_instantiate_property)
 #define DISPATCH_ROUTINE_ROUTINE_NAME(builtin_underscored_id) \
   PASTE (PASTE (ecma_builtin_, builtin_underscored_id), _dispatch_routine)
+#define OWN_PROPERTY_NAMES(builtin_underscored_id) \
+  PASTE (PASTE (ecma_builtin_, builtin_underscored_id), _own_property_names)
 
 #define ROUTINE_ARG(n) , ecma_value_t arg ## n
 #define ROUTINE_ARG_LIST_0 ecma_value_t this_arg
@@ -268,6 +270,9 @@ TRY_TO_INSTANTIATE_PROPERTY_ROUTINE_NAME (BUILTIN_UNDERSCORED_ID) (ecma_object_t
   return prop_p;
 } /* TRY_TO_INSTANTIATE_PROPERTY_ROUTINE_NAME */
 
+ecma_completion_value_t
+OWN_PROPERTY_NAMES(BUILTIN_UNDERSCORED_ID) ();
+
 /**
  * Dispatcher of the built-in's routines
  *
@@ -309,7 +314,10 @@ DISPATCH_ROUTINE_ROUTINE_NAME (BUILTIN_UNDERSCORED_ID) (uint16_t builtin_routine
 #undef ROUTINE_ARG_LIST_2
 #undef ROUTINE_ARG_LIST_3
 #undef ROUTINE_ARG_LIST_NON_FIXED
-
+       case 65535:
+       {
+         return OWN_PROPERTY_NAMES(BUILTIN_UNDERSCORED_ID) ();
+       }
     default:
     {
       JERRY_UNREACHABLE ();
@@ -317,9 +325,105 @@ DISPATCH_ROUTINE_ROUTINE_NAME (BUILTIN_UNDERSCORED_ID) (uint16_t builtin_routine
   }
 } /* DISPATCH_ROUTINE_ROUTINE_NAME */
 
+#include "ecma-helpers.h"
+#include "ecma-array-object.h"
+#include "ecma-objects.h"
+ecma_completion_value_t
+OWN_PROPERTY_NAMES(BUILTIN_UNDERSCORED_ID) ()
+{
+    ecma_completion_value_t new_array = ecma_op_create_array_object (NULL, 0, false);
+    JERRY_ASSERT (ecma_is_completion_value_normal (new_array));
+    ecma_object_t *new_array_p = ecma_get_object_from_completion_value (new_array);
+    (void) new_array_p;
+    uint32_t index = 0;
+    (void) index;
+
+    ecma_string_t *magic_str_p;
+    ecma_string_t *index_string_p;
+
+    (void) magic_str_p;
+    (void) index_string_p;
+
+#define NUMBER_VALUE(name, obj_getter, prop_writable, prop_enumerable, prop_configurable) \
+    { \
+      magic_str_p = ecma_new_ecma_string_from_magic_string_id (name); \
+      index_string_p = ecma_new_ecma_string_from_uint32 (index); \
+      ecma_property_descriptor_t item_prop_desc = ecma_make_empty_property_descriptor (); \
+      { \
+        item_prop_desc.is_value_defined = true; \
+        item_prop_desc.value = ecma_make_string_value (magic_str_p); \
+        item_prop_desc.is_writable_defined = true; \
+        item_prop_desc.is_writable = true; \
+        item_prop_desc.is_enumerable_defined = true; \
+        item_prop_desc.is_enumerable = true; \
+        item_prop_desc.is_configurable_defined = true; \
+        item_prop_desc.is_configurable = true; \
+      } \
+      ecma_completion_value_t completion = ecma_op_object_define_own_property (new_array_p, \
+                                                                               index_string_p, \
+                                                                               &item_prop_desc, \
+                                                                               false); \
+      ecma_free_completion_value (completion); \
+      ecma_deref_ecma_string (index_string_p); \
+      index++; \
+    }
+
+#define OBJECT_VALUE(name, obj_getter, prop_writable, prop_enumerable, prop_configurable) \
+    { \
+      magic_str_p = ecma_new_ecma_string_from_magic_string_id (name); \
+      index_string_p = ecma_new_ecma_string_from_uint32 (index); \
+      ecma_property_descriptor_t item_prop_desc = ecma_make_empty_property_descriptor (); \
+      { \
+        item_prop_desc.is_value_defined = true; \
+        item_prop_desc.value = ecma_make_string_value (magic_str_p); \
+        item_prop_desc.is_writable_defined = true; \
+        item_prop_desc.is_writable = true; \
+        item_prop_desc.is_enumerable_defined = true; \
+        item_prop_desc.is_enumerable = true; \
+        item_prop_desc.is_configurable_defined = true; \
+        item_prop_desc.is_configurable = true; \
+      } \
+      ecma_completion_value_t completion = ecma_op_object_define_own_property (new_array_p, \
+                                                                               index_string_p, \
+                                                                               &item_prop_desc, \
+                                                                               false); \
+      ecma_free_completion_value (completion); \
+      ecma_deref_ecma_string (index_string_p); \
+      index++; \
+    }
+
+#define ROUTINE(name, c_function_name, args_number, length_prop_value) \
+    { \
+      magic_str_p = ecma_new_ecma_string_from_magic_string_id (name); \
+      index_string_p = ecma_new_ecma_string_from_uint32 (index); \
+      ecma_property_descriptor_t item_prop_desc = ecma_make_empty_property_descriptor (); \
+      { \
+        item_prop_desc.is_value_defined = true; \
+        item_prop_desc.value = ecma_make_string_value (magic_str_p); \
+        item_prop_desc.is_writable_defined = true; \
+        item_prop_desc.is_writable = true; \
+        item_prop_desc.is_enumerable_defined = true; \
+        item_prop_desc.is_enumerable = true; \
+        item_prop_desc.is_configurable_defined = true; \
+        item_prop_desc.is_configurable = true; \
+      } \
+      ecma_completion_value_t completion = ecma_op_object_define_own_property (new_array_p, \
+                                                                               index_string_p, \
+                                                                               &item_prop_desc, \
+                                                                               false); \
+      ecma_free_completion_value (completion); \
+      ecma_deref_ecma_string (index_string_p); \
+      index++; \
+    }
+
+#include BUILTIN_INC_HEADER_NAME
+    return new_array;
+}
+
 #undef PASTE__
 #undef PASTE_
 #undef PASTE
+#undef OWN_PROPERTY_NAMES
 #undef SORT_PROPERTY_NAMES_ROUTINE_NAME
 #undef DISPATCH_ROUTINE_ROUTINE_NAME
 #undef TRY_TO_INSTANTIATE_PROPERTY_ROUTINE_NAME
